@@ -1,17 +1,16 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useSpring, animated } from '@react-spring/web';
 
-// Import Child Components
-import FilterChip from './FilterChip'; // Used for list filters (Official/User etc.)
-import QuestCard from './QuestCard';
-import QuestDetailView from './QuestDetailView'; // Make sure this exists and is styled
-import SearchAndFilters from './SearchAndFilters'; // Component for search and category chips
+// Import Views/Components
+import SearchAndFilters from './SearchAndFilters';
+import ExperienceListView from '../views/ExperienceListView'; // View
+import KunuzDetailView from '../views/KunuzDetailView';     // View
+import MasaratDetailView from '../views/MasaratDetailView'; // View
+import UserProfileView from '../views/UserProfileView';     // View
+import ExperienceDetailMapInteraction from '../views/ExperienceDetailMapInteraction'; // View for Map Mode
 
 // Import Icons
-import {
-    FiGlobe, FiCheckCircle, FiUserCheck, FiStar, FiTrendingUp,
-    FiArrowLeft, FiAward, FiPocket, FiHeart
-} from 'react-icons/fi';
+import { FiArrowLeft, FiMap, FiUser } from 'react-icons/fi';
 
 // Helper function to get viewport height
 const getViewportHeight = () => {
@@ -21,205 +20,198 @@ const getViewportHeight = () => {
     return 800; // Default height
 };
 
-// --- Main Drawer Component ---
 function InteractiveDrawer({
                                isMinimized,
                                onExpandRequest,
-                               onSearchFocusRequest, // New prop for handling search focus
+                               onMinimizeRequest, // New: Add ability to request minimize
+                               onSearchFocusRequest,
                                bottomNavHeight,
-                               minimizedDrawerPeekHeight
+                               minimizedDrawerPeekHeight,
+                               // NEW State Props from App.js
+                               currentView, // 'initial', 'list', 'detail', 'profile', 'mapInteraction'
+                               selectedExperienceType, // 'Kunuz' or 'Masarat' (when view is 'list')
+                               selectedExperience, // The full experience object (when view is 'detail' or 'mapInteraction')
+                               experiencesData, // Array of all experiences
+                               userProfileData, // User profile info
+                               activeQuestProgress, // State for active Kunuz hunt { currentStepIndex, points, timeRemaining, completedSteps: {stepId: data} }
+                               favoriteExperienceIds, // Set or Array of favorite IDs
+                               // NEW Handlers from App.js
+                               onExperienceSelect, // Func(experience) -> sets selectedExperience, sets view to 'detail'
+                               onBackToList, // Func() -> clears selectedExperience, sets view to 'list'
+                               onStartExperience, // Func(experience) -> sets view to 'mapInteraction', potentially starts timer/progress
+                               onViewMapForExperience, // Func(experience) -> sets view to 'mapInteraction' (maybe passive view)
+                               onSubmitKunuzStep, // Func(stepId, submissionData) -> updates activeQuestProgress
+                               onToggleFavorite, // Func(experienceId)
+                               onViewProfile, // Func() -> sets view to 'profile'
+                               onCloseProfile, // Func() -> sets view back to 'list' or 'map'
                            }) {
-    // --- State Definitions ---
-    const [activeListFilter, setActiveListFilter] = useState('All'); // For "All/Official/User" in list view
-    const [selectedQuest, setSelectedQuest] = useState(null); // For detail view
-
-    // --- Refs ---
     const contentRef = useRef(null);
-    const headerRef = useRef(null); // Ref for the static header area
+    const headerRef = useRef(null);
 
-    // --- Drawer Animation & Position Calculation ---
+    // --- Drawer Animation ---
     const vh = getViewportHeight();
-    const expandedTop = vh * 0.10; // Expanded: 10% from top
-    const minimizedTop = vh - bottomNavHeight - minimizedDrawerPeekHeight; // Minimized position
+    const expandedTop = vh * 0.10;
+    const mapInteractionPeekTop = vh - bottomNavHeight - 150; // Peek height when map is active
+    const minimizedTop = vh - bottomNavHeight - minimizedDrawerPeekHeight;
+
+    const getTargetTop = () => {
+        if (currentView === 'mapInteraction') return mapInteractionPeekTop;
+        return isMinimized ? minimizedTop : expandedTop;
+    };
 
     const [{ top }, api] = useSpring(() => ({
-        top: isMinimized ? minimizedTop : expandedTop,
-        config: { tension: 280, friction: 30 }
+        top: getTargetTop(),
+        config: { tension: 280, friction: 30 },
     }));
 
-    // Update spring animation when isMinimized state changes
     useEffect(() => {
-        const newVh = getViewportHeight();
-        const newExpandedTop = newVh * 0.10;
-        const newMinimizedTop = newVh - bottomNavHeight - minimizedDrawerPeekHeight;
-        api.start({ top: isMinimized ? newMinimizedTop : newExpandedTop });
-    }, [isMinimized, api, bottomNavHeight, minimizedDrawerPeekHeight]);
-
-    // --- Handlers ---
-    const handleQuestSelect = (quest) => {
-        setSelectedQuest(quest);
-        // Ensure drawer is expanded when selecting a quest
-        if (isMinimized) {
-            onExpandRequest(); // Trigger expansion
-        }
-        // Reset scroll position when showing details
-        if (contentRef.current) {
+        api.start({ top: getTargetTop() });
+        // Reset scroll on view change, except when going to map interaction
+        if (contentRef.current && currentView !== 'mapInteraction') {
             contentRef.current.scrollTop = 0;
+        }
+    }, [isMinimized, currentView, api, bottomNavHeight, minimizedDrawerPeekHeight, mapInteractionPeekTop]);
+
+    // --- Dynamic Header Content ---
+    const renderHeaderTitle = () => {
+        if (currentView === 'detail' && selectedExperience) return selectedExperience.title;
+        if (currentView === 'profile') return "My Profile";
+        if (currentView === 'mapInteraction' && selectedExperience) return `Active: ${selectedExperience.title}`;
+        // List view title could be added if needed ("Kunuz Hunts" / "Masarat Trails")
+        return ""; // Default for list or initial
+    };
+
+    const showBackButton = (currentView === 'detail' || currentView === 'profile' || currentView === 'mapInteraction');
+    const handleBackClick = () => {
+        if (currentView === 'detail') onBackToList();
+        else if (currentView === 'profile') onCloseProfile();
+        else if (currentView === 'mapInteraction') {
+            // Decide: Go back to detail view or list view? Let's go to detail for now.
+            if (selectedExperience) {
+                onExperienceSelect(selectedExperience); // This sets view to 'detail'
+            } else {
+                onBackToList(); // Fallback
+            }
         }
     };
 
-    const handleBackToList = () => {
-        setSelectedQuest(null);
-        // Reset scroll position when going back to list
-        if (contentRef.current) {
-            contentRef.current.scrollTop = 0;
+    // Determine if the main search/filter header should be shown
+    // Hide it in detail, profile, and map interaction modes.
+    const showSearchAndFiltersHeader = currentView === 'list' || currentView === 'initial' || isMinimized;
+
+
+    // --- Render Correct View Content ---
+    const renderContentView = () => {
+        switch (currentView) {
+            case 'list':
+                return (
+                    <ExperienceListView
+                        experiences={experiencesData.filter(exp => exp.type === selectedExperienceType)}
+                        onExperienceSelect={onExperienceSelect}
+                        onToggleFavorite={onToggleFavorite}
+                        favoriteExperienceIds={favoriteExperienceIds}
+                        listType={selectedExperienceType} // Pass type for potential specific styling
+                    />
+                );
+            case 'detail':
+                if (!selectedExperience) return <div className="p-4 text-center text-gray-500">Error: No experience selected.</div>;
+                if (selectedExperience.type === 'Kunuz') {
+                    return <KunuzDetailView
+                        experience={selectedExperience}
+                        onStart={onStartExperience}
+                        onViewMap={onViewMapForExperience} // Optional: Button to just view map pins
+                    />;
+                } else {
+                    return <MasaratDetailView
+                        experience={selectedExperience}
+                        onStart={onStartExperience}
+                        onViewMap={onViewMapForExperience}
+                    />;
+                }
+            case 'profile':
+                return <UserProfileView
+                    user={userProfileData}
+                    experiences={experiencesData} // Needed to show titles from IDs
+                    onSelectExperience={onExperienceSelect} // Allow clicking completed/ongoing
+                />;
+            case 'mapInteraction':
+                if (!selectedExperience) return <div className="p-4 text-center text-gray-500">Error: No active experience.</div>;
+                return <ExperienceDetailMapInteraction
+                    experience={selectedExperience}
+                    progress={activeQuestProgress}
+                    onSubmitStep={onSubmitKunuzStep}
+                    onExpandRequest={onExpandRequest} // Allow expanding drawer from map interaction view
+                />
+            case 'initial': // Or when minimized showing categories
+            default:
+                // Potentially show something else when minimized and not searching
+                // Or just keep it blank below the search/filters
+                return <div className="h-full bg-gray-50"></div>; // Placeholder empty state
         }
-        // No need to explicitly expand here, as we only show back button when expanded
     };
 
-    // --- Mock Data (Keep your existing data) ---
-    const filters = [
-        { id: 'All', label: 'All', icon: FiGlobe },
-        { id: 'Culture', label: 'Culture & Heritage', icon: FiAward },
-        { id: 'Parks', label: 'Parks & Rec', icon: FiPocket },
-        { id: 'Foodie', label: 'Foodie Trails', icon: FiHeart },
-        { id: 'Civic', label: 'Civic Awareness', icon: FiCheckCircle },
-    ];
-    const baseQuests = [
-        {
-            id: 1, imageUrl: './images/exp/1.png', title: 'Historic Jeddah Exploration', rating: 4.8, places: 8, joined: 1250,
-            description: "Discover the secrets of Al-Balad, Jeddah's historic heart. Follow clues through ancient alleyways, learn about traditional architecture, and experience the vibrant culture of this UNESCO World Heritage site.",
-            reviews: [ { id: 'r1', user: 'Ahmed K.', rating: 5, text: "Amazing experience! Learned so much.", media: [] }, { id: 'r2', user: 'Fatima S.', rating: 4, text: "Fun trail, well organized.", media: ['https://via.placeholder.com/100/aabbcc'] }, { id: 'r3', user: 'Omar B.', rating: 5, text: "Highly recommended for families.", media: [] }, ]
-        }, {
-            id: 2, imageUrl: './images/exp/2.png', title: 'Riyadh Park Discovery Challenge', rating: 4.5, places: 5, joined: 870,
-            description: "Explore the vast Riyadh Park through an interactive challenge. Find hidden spots, answer trivia about local flora, and enjoy the green spaces.",
-            reviews: [ { id: 'r4', user: 'Layla M.', rating: 4, text: "Great way to spend an afternoon.", media: [] }, { id: 'r5', user: 'Youssef A.', rating: 5, text: "Kids loved the challenges!", media: ['https://via.placeholder.com/100/ccbbaa', 'https://via.placeholder.com/100/ddeeff'] }, ]
-        },
-        { id: 3, imageUrl: './images/exp/3.png', title: 'Al Khobar Corniche Foodie Quest', rating: 4.9, places: 6, joined: 1500, description: "Taste your way along the Corniche! Find the best spots for local delicacies and international treats.", reviews: [] },
-        { id: 4, imageUrl: './images/exp/4.png', title: 'Dammam Waterfront Art Walk', rating: 4.3, places: 7, joined: 640, description: "Discover stunning local art installations and sculptures dotted along the beautiful Dammam waterfront.", reviews: [] },
-        { id: 5, imageUrl: './images/exp/5.png', title: 'Understanding New City Projects', rating: null, places: 4, joined: 320, description: "Learn about the exciting upcoming developments and infrastructure projects shaping your city's future.", reviews: [] },
-    ];
-    // Duplicate quests for testing scrolling
-    const quests = [
-        ...baseQuests,
-        { ...baseQuests[0], id: 6, title: "Jeddah Historic Repeat Quest" },
-        { ...baseQuests[1], id: 7, title: "Riyadh Park Second Challenge" },
-        { ...baseQuests[2], id: 8, title: "Al Khobar Foodie Again" },
-        { ...baseQuests[3], id: 9, title: "Dammam Art Walk Encore" },
-        { ...baseQuests[4], id: 10, title: "More City Projects Info" },
-    ];
-    // Apply filtering based on activeListFilter if needed
-    const displayedQuests = quests.filter(quest => {
-        if (activeListFilter === 'All') return true;
-        // Add logic here if you need to filter by 'Official' or 'User'
-        // e.g., if (activeListFilter === 'Official' && quest.isOfficial) return true;
-        return true; // Placeholder
-    });
-
-
-    // --- Render ---
     return (
         <animated.div
             className="fixed left-0 right-0 bottom-0 bg-white rounded-t-2xl shadow-2xl z-30 overflow-hidden flex flex-col"
-            style={{
-                top: top,
-                // Ensure height calculation allows content visibility
-                // The height itself isn't as crucial as the `top` position for visibility
-            }}
+            style={{ top }}
         >
-            {/* --- Static Header Area (Always Visible) --- */}
+            {/* --- Static Header Area --- */}
             <div ref={headerRef} className="flex-shrink-0 border-b border-gray-200 bg-white rounded-t-2xl">
-                {/* Handle (Clickable only when minimized to expand) */}
+                {/* Handle (Clickable to expand/minimize based on context) */}
                 <div
                     className="w-full h-5 flex justify-center items-center cursor-pointer pt-2"
-                    onClick={isMinimized ? onExpandRequest : undefined}
-                    title={isMinimized ? "Expand" : ""}
+                    onClick={isMinimized ? onExpandRequest : (currentView !== 'mapInteraction' ? onMinimizeRequest : undefined)} // Minimize only if not in map mode? Or allow toggling peek/full?
+                    title={isMinimized ? "Expand" : (currentView !== 'mapInteraction' ? "Minimize" : "")}
                 >
                     <div className={`w-10 h-1 rounded-full ${isMinimized ? 'bg-cyan-500' : 'bg-gray-300'}`}></div>
                 </div>
 
-                {/* Back Button & Title Area (Only visible when EXPANDED) */}
-                <div className={`px-4 pt-1 flex items-center min-h-[36px] ${isMinimized ? 'hidden' : ''}`}>
-                    {/* Back Button: Show only if a quest is selected AND drawer is expanded */}
-                    {selectedQuest ? (
-                        <button
-                            onClick={handleBackToList}
-                            aria-label="Back to list"
-                            className="text-gray-600 hover:text-cyan-600 p-1 -ml-1 mr-2 transition-colors"
-                        >
+                {/* Back Button & Title Area (Shown when NOT minimized and NOT showing search filters) */}
+                <div className={`px-4 pt-1 flex items-center min-h-[36px] ${isMinimized || showSearchAndFiltersHeader ? 'hidden' : ''}`}>
+                    {showBackButton ? (
+                        <button onClick={handleBackClick} aria-label="Back" className="text-gray-600 hover:text-cyan-600 p-1 -ml-1 mr-2 transition-colors">
                             <FiArrowLeft size={22} />
                         </button>
                     ) : (
-                        // Spacer to keep title centered when back button isn't shown
-                        <div className="w-8 flex-shrink-0"></div>
+                        <div className="w-8 flex-shrink-0"></div> // Spacer
                     )}
-
-                    {/* Title: Show Quest title ONLY when expanded AND a quest is selected */}
                     <h2 className="text-lg font-semibold text-gray-800 text-center truncate flex-grow px-1">
-                        {selectedQuest ? selectedQuest.title : ''}
+                        {renderHeaderTitle()}
                     </h2>
-
-                    {/* Spacer for balance */}
-                    <div className="w-8 flex-shrink-0"></div>
+                    {/* Right side placeholder/action (e.g., Map icon for detail view?) */}
+                    <div className="w-8 flex-shrink-0">
+                        {(currentView === 'detail' && selectedExperience) && (
+                            <button onClick={() => onViewMapForExperience(selectedExperience)} className="text-gray-600 hover:text-cyan-600 p-1" title="View on Map">
+                                <FiMap size={20}/>
+                            </button>
+                        )}
+                        {(currentView === 'profile') && (
+                            <button onClick={() => console.log("Edit profile...")} className="text-gray-600 hover:text-cyan-600 p-1" title="Settings">
+                                {/* <FiSettings size={20}/> Placeholder */}
+                            </button>
+                        )}
+                    </div>
                 </div>
 
-
-                {/* Search Bar and Category Filters Component */}
-                {/* It now controls its own content based on isMinimized */}
-                <SearchAndFilters
-                    isMinimized={isMinimized}
-                    onSearchFocus={onSearchFocusRequest} // Use the passed handler
-                />
+                {/* Search Bar and Category Filters (Shown when Minimized OR in List view) */}
+                {showSearchAndFiltersHeader && (
+                    <SearchAndFilters
+                        isMinimized={isMinimized && currentView !== 'list'} // Adjust logic based on desired behavior
+                        onSearchFocus={onSearchFocusRequest}
+                    />
+                )}
             </div>
 
-            {/* --- Scrollable Content Area (Only visible when EXPANDED) --- */}
+            {/* --- Scrollable/Main Content Area --- */}
             <div
                 ref={contentRef}
-                className={`flex-grow overflow-y-auto drawer-content-scrollable ${isMinimized ? 'hidden' : 'block'}`}
+                // Hide content completely when minimized AND not showing map interaction peek
+                className={`flex-grow overflow-y-auto drawer-content-scrollable ${ (isMinimized && currentView !== 'mapInteraction') ? 'hidden' : 'block'}`}
+                style={{ WebkitOverflowScrolling: 'touch' }} // For smoother scrolling on iOS
             >
-                {selectedQuest ? (
-                    // ----- Render Quest Detail View -----
-                    // Ensure QuestDetailView receives the quest data correctly
-                    <QuestDetailView quest={selectedQuest} />
+                {renderContentView()}
+            </div>
 
-                ) : (
-                    // ----- Render Quest List View -----
-                    <>
-                        {/* List Filters (e.g., All/Official/User, Popular/New) */}
-                        {/* These only show when the list is visible (expanded and no quest selected) */}
-                        <div className="px-4 py-3 border-b border-gray-200 flex flex-wrap items-center justify-between gap-y-2 gap-x-4">
-                            <div className="flex items-center space-x-3">
-                                <button className={`text-sm font-medium flex items-center space-x-1 ${activeListFilter === 'All' ? 'text-cyan-600' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveListFilter('All')}> <FiGlobe size={16} /> <span>All</span></button>
-                                <button className={`text-sm font-medium flex items-center space-x-1 ${activeListFilter === 'Official' ? 'text-cyan-600' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveListFilter('Official')}> <FiCheckCircle size={16} /> <span>Official</span></button>
-                                <button className={`text-sm font-medium flex items-center space-x-1 ${activeListFilter === 'User' ? 'text-cyan-600' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveListFilter('User')}> <FiUserCheck size={16} /> <span>User</span></button>
-                            </div>
-                            <div className="flex items-center space-x-3">
-                                <button className={`text-xs font-medium flex items-center space-x-0.5 text-gray-500 hover:text-gray-700'}`}> <FiStar size={14} /> <span>Popular</span> </button>
-                                <button className={`text-xs font-medium flex items-center space-x-0.5 text-gray-500 hover:text-gray-700'}`}> <FiTrendingUp size={14} /> <span>New</span> </button>
-                            </div>
-                        </div>
-
-                        {/* Quest Card List */}
-                        <div className="p-4 space-y-3">
-                            {displayedQuests.map((quest) => (
-                                <div key={quest.id} onClick={() => handleQuestSelect(quest)} className="cursor-pointer">
-                                    <QuestCard
-                                        imageUrl={quest.imageUrl}
-                                        title={quest.title}
-                                        rating={quest.rating}
-                                        places={quest.places}
-                                        joined={quest.joined}
-                                        // No onClick needed here; parent div handles it
-                                    />
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Padding at the bottom */}
-                        <div className="h-4"></div>
-                    </> // End Fragment for list view
-                )}
-            </div> {/* End Scrollable Content Area */}
         </animated.div>
     );
 }

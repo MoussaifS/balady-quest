@@ -36,3 +36,43 @@
     transform: rotate(360deg);
   }
 }
+
+/* Ensure drawer content scrolls */
+.drawer-content-scrollable {
+  -webkit-overflow-scrolling: touch; /* Momentum scrolling on iOS */
+}
+
+/* Hide scrollbar utility (if needed and not using a plugin) */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Basic line-clamp utility (if not using Tailwind plugin) */
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+/* Add other line-clamp numbers as needed */
+
+/* Ensure Leaflet map tiles aren't blurry on high-res displays */
+.leaflet-tile {
+  image-rendering: -webkit-optimize-contrast; /* Chrome/Safari */
+  image-rendering: crisp-edges; /* Firefox */
+  image-rendering: pixelated; /* Standard */
+}
+
+/* You might need to adjust z-indexes further based on interactions */
+/* .leaflet-pane { z-index: 10; } */
+/* .leaflet-control { z-index: 1001 !important; } Ensure overlays are above map controls */
+
+/* Ensure map container takes full space */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+}
