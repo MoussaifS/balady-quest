@@ -1,10 +1,19 @@
-import React, { useRef, useEffect } from 'react';
+// src/components/InteractiveDrawer.jsx
+
+import React, { useRef, useEffect, useState } from 'react';
 import { useDrag } from '@use-gesture/react';
 import { useSpring, animated } from '@react-spring/web';
 
-// Import other components and icons as before
-import SearchAndFilters from './SearchAndFilters';
-import { FiPlusCircle, FiPlay, FiBookOpen, FiMoon, FiCompass, FiCamera, FiMinusSquare, FiMap } from 'react-icons/fi';
+// Import Child Components
+import FilterChip from './FilterChip';
+import QuestCard from './QuestCard';
+import QuestDetailView from './QuestDetailView'; // Detail view component
+
+// Import Icons
+import {
+    FiMap, FiStar, FiMapPin, FiUsers, FiFilter, FiAward, FiTrendingUp,
+    FiCheckCircle, FiUserCheck, FiGlobe, FiPocket, FiHeart, FiArrowLeft
+} from 'react-icons/fi';
 
 // Helper function to get viewport height
 const getViewportHeight = () => {
@@ -14,281 +23,294 @@ const getViewportHeight = () => {
     return 800; // Default height
 };
 
-// --- Re-paste the content components here ---
-const AddPlaceBanner = () => (
-    <div className="mx-4 my-3 p-4 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg flex items-center justify-between text-white shadow-md">
-        <div>
-            <h3 className="font-semibold">Add a Place</h3>
-            <p className="text-sm opacity-90">Help us grow! Add a new place to make the app even better</p>
-        </div>
-        <FiPlusCircle size={30} className="opacity-80" />
-    </div>
-);
 
-const WhatsNewSection = () => (
-    <div className="px-4 mt-4">
-        <h2 className="text-lg font-semibold text-gray-800 mb-2">What's new in Balady</h2>
-        <div className="flex space-x-3 overflow-x-auto pb-2">
-             {/* Example Cards - Added key prop */}
-            <div key="free-roam" className="flex-shrink-0 w-36 h-24 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-lg shadow-md flex flex-col justify-center items-center text-white p-2 text-center">
-                <FiPlay size={24} className="mb-1" />
-                <span className="text-xs font-medium">Free Roam</span>
-            </div>
-            <div key="carplay" className="flex-shrink-0 w-36 h-24 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg shadow-md flex flex-col justify-center items-center text-white p-2 text-center">
-                <FiPlay size={24} className="mb-1" /> {/* Placeholder icon */}
-                <span className="text-xs font-medium">Balady in CarPlay</span>
-            </div>
-            <div key="better-route" className="flex-shrink-0 w-36 h-24 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg shadow-md flex flex-col justify-center items-center text-white p-2 text-center">
-                <FiPlay size={24} className="mb-1" /> {/* Placeholder icon */}
-                <span className="text-xs font-medium">Better Route -12 min</span>
-            </div>
-            {/* Add more cards */}
-        </div>
-    </div>
-);
-
-const QuickActionsSection = () => (
-    <div className="px-4 mt-4">
-        <h2 className="text-lg font-semibold text-gray-800 mb-3">Quick actions</h2>
-        <div className="grid grid-cols-4 gap-x-2 gap-y-4 text-center">
-             {/* Added key prop */}
-            <button key="quests" className="flex flex-col items-center text-cyan-600 hover:bg-gray-100 p-1 rounded-md">
-                <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center mb-1">
-                    <FiMap size={20} />
-                </div>
-                <span className="text-xs font-medium text-gray-700">Quests</span>
-            </button>
-            {/* --- Original Icons --- */}
-             {/* Added key props */}
-            <button key="quaran" className="flex flex-col items-center text-cyan-600 hover:bg-gray-100 p-1 rounded-md">
-                <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center mb-1">
-                    <FiBookOpen size={20} />
-                </div>
-                <span className="text-xs font-medium text-gray-700">Quaran</span>
-            </button>
-            <button key="athkar" className="flex flex-col items-center text-cyan-600 hover:bg-gray-100 p-1 rounded-md">
-                <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center mb-1">
-                    <FiMoon size={20} />
-                </div>
-                <span className="text-xs font-medium text-gray-700">Athkar</span>
-            </button>
-            <button key="qibla" className="flex flex-col items-center text-cyan-600 hover:bg-gray-100 p-1 rounded-md">
-                <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center mb-1">
-                    <FiCompass size={20} />
-                </div>
-                <span className="text-xs font-medium text-gray-700">Qibla</span>
-            </button>
-            <button key="snap" className="flex flex-col items-center text-cyan-600 hover:bg-gray-100 p-1 rounded-md">
-                <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center mb-1">
-                    <FiCamera size={20} />
-                </div>
-                <span className="text-xs font-medium text-gray-700">Snap & Send</span>
-            </button>
-            <button key="parking" className="flex flex-col items-center text-cyan-600 hover:bg-gray-100 p-1 rounded-md">
-                <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center mb-1">
-                    <FiMinusSquare size={20} /> {/* Placeholder for Parking */}
-                </div>
-                <span className="text-xs font-medium text-gray-700">Parking</span>
-            </button>
-            {/* Add more actions */}
-        </div>
-    </div>
-);
-// --- End of content components ---
-
-
-// Main Draggable Drawer Component
+// --- Main Draggable Drawer Component ---
 function InteractiveDrawer() {
-    const bottomNavHeight = 56; // Height of your bottom navigation bar in pixels
-    const drawerHeaderHeight = 20; // Height of the drag handle area in pixels
-    const closedHeightPeek = 160; // How much content (px) peeks out from bottom when closed
+    // --- State Definitions ---
+    const [activeFilter, setActiveFilter] = useState('All');
+    const [activeToggle, setActiveToggle] = useState('all');
+    const [activeSort, setActiveSort] = useState('popular');
+    const [selectedQuest, setSelectedQuest] = useState(null);
 
-    // Calculate target Y positions (distance from the TOP of the viewport)
-    const vh = getViewportHeight();
-    // Adjusted openY: Lower this value (closer to 0) to open drawer higher up
-    const openY = vh * 0.25; // Open state: drawer top at 25% of viewport height from top
-    // Adjusted closedY: This is the distance from the TOP when closed
-    const closedY = vh - bottomNavHeight - drawerHeaderHeight - closedHeightPeek;
-
-    // --- react-spring Animation ---
-    // Initialize spring with the calculated closedY position
-    const [{ y }, api] = useSpring(() => ({
-        y: closedY,
-        config: { tension: 280, friction: 30 } // Default animation config
-     }));
-    const [isDrawerOpen, setIsDrawerOpen] = React.useState(false); // Track logical open/closed state
-
-    // Reference for the scrollable content area
+    // --- Refs ---
     const contentRef = useRef(null);
 
-     // Effect to potentially update calculations if viewport resizes (optional but good practice)
-     useEffect(() => {
+    // --- Drawer Animation & Position Calculation ---
+    const bottomNavHeight = 56;
+    const stickyHeaderHeight = 68; // Handle + Title Area approx height
+    const closedHeightPeek = 80;  // How much content peeks out when closed
+    const drawerHeaderHeight = 20; // Height of the handle itself for calc
+
+    const vh = getViewportHeight();
+    const openY = vh * 0.25; // Open state: drawer top at 25% of viewport height
+    const closedY = vh - bottomNavHeight - drawerHeaderHeight - closedHeightPeek; // Correct calc
+
+    const [{ y }, api] = useSpring(() => ({
+        y: closedY, // Start closed
+        config: { tension: 280, friction: 30 }
+    }));
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+    // --- Handlers ---
+    const handleQuestSelect = (quest) => {
+      setSelectedQuest(quest);
+      api.start({ y: openY }); // Force open
+      setIsDrawerOpen(true);
+      if (contentRef.current) {
+        contentRef.current.scrollTop = 0; // Reset scroll on view change
+      }
+    };
+
+    const handleBackToList = () => {
+      setSelectedQuest(null);
+      if (contentRef.current) {
+        contentRef.current.scrollTop = 0; // Reset scroll on view change
+      }
+      // Decide if drawer should stay open or animate closed/partially closed
+      // api.start({ y: closedY }); // Example: close it
+      // setIsDrawerOpen(false);
+    };
+
+    // --- Effects ---
+    // Resize handler
+    useEffect(() => {
         const handleResize = () => {
             const newVh = getViewportHeight();
             const newOpenY = newVh * 0.25;
             const newClosedY = newVh - bottomNavHeight - drawerHeaderHeight - closedHeightPeek;
-            // Update spring immediately if drawer state requires it (or just recalculate for next drag)
+            // Update spring position based on current logical state and new dimensions
             api.start({ y: isDrawerOpen ? newOpenY : newClosedY, immediate: true });
         };
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, [api, isDrawerOpen, bottomNavHeight, drawerHeaderHeight, closedHeightPeek]); // Dependencies
+    }, [api, isDrawerOpen, bottomNavHeight, drawerHeaderHeight, closedHeightPeek]); // Ensure all dependencies are included
+
+    // Scroll control effect - Enables/disables overflowY based on drawer position
+    useEffect(() => {
+        const contentEl = contentRef.current;
+        if (contentEl) {
+            const currentY = y.get();
+            // Enable scrolling when drawer is open or very close to open
+            const isEffectivelyOpen = currentY < openY + 50;
+            contentEl.style.overflowY = isEffectivelyOpen ? 'auto' : 'hidden';
+        }
+        // This effect correctly depends on the spring value 'y' itself
+    }, [y, openY]);
 
 
-    // --- react-use-gesture Drag Handler ---
+    // --- Drag Handler (Revised Logic for Content Scrolling) ---
     const bind = useDrag(
         ({
-            last,
-            memo = y.get(),
-            movement: [, my],
-            velocity: [, vy],
-            direction: [, dy],
-            cancel,
-            active,
-            event,
+            first, last, memo = y.get(), movement: [, my], velocity: [, vy],
+            direction: [, dy], event, target, active, tap, cancel
         }) => {
-            let newY = memo + my;
+            if (tap) return memo; // Ignore simple taps
 
-            // --- Content Scrolling vs Drawer Dragging Logic ---
+            const currentYPos = y.get();
             const contentEl = contentRef.current;
-            if (active && contentEl) {
-                const contentScrollTop = contentEl.scrollTop;
-                // If dragging UPWARDS (dy < 0) and content is scrolled to the TOP
-                // OR dragging DOWNWARDS (dy > 0) and we are NOT at the top of the content scroll
-                // then we prioritize CONTENT SCROLLING.
-                if ( (dy < 0 && contentScrollTop > 0) || (dy > 0 && contentScrollTop > 0 /*&& newY < closedY*/ ) ) {
-                     // If scrolling down inside the content, let the browser handle it, don't move the drawer
-                     // This check is tricky; we want to drag drawer down *unless* content can scroll down more.
-                     // Let's only cancel drag if scrolling *up* when not at top
-                     if (dy < 0 && contentScrollTop > 0) {
-                        // Don't move drawer if scrolling content up
-                        return memo;
-                     }
-                }
-                 // Allow dragging drawer down even if content is scrolled, unless content can *still* scroll down?
-                 // The default browser behavior combined with `touch-action: none` on handle usually works okay here.
-                 // Prioritize dragging the drawer itself unless actively scrolling within the content area.
+            const isEffectivelyOpen = currentYPos <= openY + 15; // Is drawer visually open?
+
+            // Determine if the event target is within the scrollable content
+            let isTargetInScrollableContent = contentEl?.contains(target) ?? false;
+
+            // Log Start Info
+            if (active && first) {
+                console.log(`--- Drag Start --- Target in Content: ${isTargetInScrollableContent}, Drawer Open: ${isEffectivelyOpen}, ScrollTop: ${contentEl?.scrollTop.toFixed(0)}`);
             }
 
-            // Clamp the position between fully open and fully closed states
-            newY = Math.max(openY, Math.min(closedY, newY));
+            // --- Prioritize Content Scrolling ---
+            if (active && isEffectivelyOpen && isTargetInScrollableContent) {
+                 // Check if the content element itself can scroll in the drag direction
+                const canScrollUp = (contentEl?.scrollTop ?? 0) > 0;
+                const canScrollDown = contentEl ? (contentEl.scrollTop + contentEl.clientHeight < contentEl.scrollHeight - 1) : false;
+                const isDraggingUp = dy < 0;
+                const isDraggingDown = dy > 0;
+
+                // If trying to scroll in a direction the content CAN scroll, let native scroll handle it.
+                if ( (isDraggingUp && canScrollUp) || (isDraggingDown && canScrollDown) ) {
+                    console.log(">>> Allowing Native Scroll <<<");
+                    // Prevent the drawer from moving by returning the memoized position
+                    return memo;
+                }
+                 // If content cannot scroll further in that direction (boundary reached), the gesture might
+                 // be intended to drag the drawer (e.g., drag down from top to close). Allow default logic below.
+                 console.log(">>> Content boundary reached or cannot scroll, potentially dragging drawer. <<<")
+            }
+
+            // --- Default Drawer Dragging Logic ---
+            // Proceeds if not returned above
+            // console.log(">>> Moving Drawer <<<"); // Uncomment for debugging drawer movement
+            let newY = memo + my;
+            newY = Math.max(openY, Math.min(closedY, newY)); // Clamp
 
             if (last) {
-                // Drag finished, decide where to snap
-                const projectedY = newY + vy * 200; // Project position based on velocity
-                let targetY = closedY; // Default to closing
+                console.log("--- Drag End ---");
+                // --- Snapping Logic ---
+                const projectedY = newY + vy * 200;
+                let targetY = closedY;
                 let shouldBeOpen = false;
-
-                // Adjusted snap logic: Check projected position OR significant upward flick
-                if (projectedY < (openY + closedY) / 1.8 || vy < -0.25) { // Made slightly easier to open
-                    targetY = openY;
-                    shouldBeOpen = true;
-                } else {
-                     targetY = closedY;
-                     shouldBeOpen = false;
+                // Allow closing detail view with a reasonable downward swipe
+                 if (selectedQuest && isDrawerOpen && dy > 0 && (vy > 0.3 || my > vh * 0.15) ) {
+                     targetY = closedY; shouldBeOpen = false; handleBackToList(); // Go back to list on close swipe
+                 } else if (projectedY < (openY + closedY) / 1.8 || vy < -0.25) { // Bias towards opening
+                    targetY = openY; shouldBeOpen = true;
+                 } else if (!selectedQuest) { // Only snap closed from list view
+                    targetY = closedY; shouldBeOpen = false;
+                 } else { // Default to stay open if in detail view & not swiped down hard
+                    targetY = openY; shouldBeOpen = true;
                 }
+                api.start({ y: targetY });
+                setIsDrawerOpen(shouldBeOpen);
 
-                api.start({ y: targetY }); // Animate to target
-                setIsDrawerOpen(shouldBeOpen); // Update logical state *after* animation starts
-            } else {
-                // While dragging, update position immediately
+            } else if (active) { // Only update spring if actively dragging
                 api.start({ y: newY, immediate: true });
             }
-
-            return memo;
+            return memo; // Return memoized position for next frame
         },
         {
             from: () => [0, y.get()],
-            // Prevent scroll on the PAGE when dragging handle,
-            // but allow scroll *within* the content div when appropriate.
-            preventScroll: true, // Prevent page scroll
-            axis: 'y', // Explicitly lock to y-axis
-            // bounds: { top: openY, bottom: closedY } // Alternative way to set limits
+            filterTaps: true,
+            preventScroll: true, // Prevent page scroll when dragging the *handle*
+            axis: 'y',
+            pointer: { touch: true } // Capture touch events
         }
     );
 
-    // Toggle drawer state on handle click
-    const handleHandleClick = () => {
-        const targetY = isDrawerOpen ? closedY : openY;
-        api.start({ y: targetY });
-        setIsDrawerOpen(!isDrawerOpen);
-    };
 
-    // Effect to control content scrollability based on drawer position
-    // useEffect(() => {
-    //     const contentEl = contentRef.current;
-    //     if (contentEl) {
-    //         // Allow scrolling only when fully open or very close to it
-    //         const isEffectivelyOpen = y.get() < openY + 20; // Check if current position is near open state
-    //         contentEl.style.overflowY = isEffectivelyOpen ? 'auto' : 'hidden';
-    //     }
-    //     // This effect should run whenever the spring value changes
-    //     // We subscribe to the spring value to trigger this check accurately
-    //     const unsubscribe = y.onChange(() => {
-    //          const contentEl = contentRef.current;
-    //          if (contentEl) {
-    //              const isEffectivelyOpen = y.get() < openY + 20;
-    //              contentEl.style.overflowY = isEffectivelyOpen ? 'auto' : 'hidden';
-    //          }
-    //     });
-    //     return unsubscribe; // Cleanup subscription on unmount
+    // --- Mock Data (Ensure enough items to scroll) ---
+    const filters = [
+        { id: 'All', label: 'All', icon: FiGlobe },
+        { id: 'Culture', label: 'Culture & Heritage', icon: FiAward },
+        { id: 'Parks', label: 'Parks & Rec', icon: FiPocket },
+        { id: 'Foodie', label: 'Foodie Trails', icon: FiHeart },
+        { id: 'Civic', label: 'Civic Awareness', icon: FiCheckCircle },
+    ];
+    const baseQuests = [
+         {
+          id: 1, imageUrl: 'https://via.placeholder.com/150/771796', title: 'Historic Jeddah Exploration', rating: 4.8, places: 8, joined: 1250,
+          description: "Discover the secrets of Al-Balad, Jeddah's historic heart. Follow clues through ancient alleyways, learn about traditional architecture, and experience the vibrant culture of this UNESCO World Heritage site.",
+          reviews: [ { id: 'r1', user: 'Ahmed K.', rating: 5, text: "Amazing experience! Learned so much.", media: [] }, { id: 'r2', user: 'Fatima S.', rating: 4, text: "Fun trail, well organized.", media: ['https://via.placeholder.com/100/aabbcc'] }, { id: 'r3', user: 'Omar B.', rating: 5, text: "Highly recommended for families.", media: [] }, ]
+        }, {
+          id: 2, imageUrl: 'https://via.placeholder.com/150/24f355', title: 'Riyadh Park Discovery Challenge', rating: 4.5, places: 5, joined: 870,
+          description: "Explore the vast Riyadh Park through an interactive challenge. Find hidden spots, answer trivia about local flora, and enjoy the green spaces.",
+          reviews: [ { id: 'r4', user: 'Layla M.', rating: 4, text: "Great way to spend an afternoon.", media: [] }, { id: 'r5', user: 'Youssef A.', rating: 5, text: "Kids loved the challenges!", media: ['https://via.placeholder.com/100/ccbbaa', 'https://via.placeholder.com/100/ddeeff'] }, ]
+        },
+        { id: 3, imageUrl: 'https://via.placeholder.com/150/d32776', title: 'Al Khobar Corniche Foodie Quest', rating: 4.9, places: 6, joined: 1500, description: "Taste your way along the Corniche! Find the best spots for local delicacies and international treats.", reviews: [] },
+        { id: 4, imageUrl: 'https://via.placeholder.com/150/f66b97', title: 'Dammam Waterfront Art Walk', rating: 4.3, places: 7, joined: 640, description: "Discover stunning local art installations and sculptures dotted along the beautiful Dammam waterfront.", reviews: [] },
+        { id: 5, imageUrl: 'https://via.placeholder.com/150/56a8c2', title: 'Understanding New City Projects', rating: null, places: 4, joined: 320, description: "Learn about the exciting upcoming developments and infrastructure projects shaping your city's future.", reviews: [] },
+    ];
+    // Duplicate quests for testing scrolling
+    const quests = [
+        ...baseQuests,
+        { ...baseQuests[0], id: 6, title: "Jeddah Historic Repeat Quest" },
+        { ...baseQuests[1], id: 7, title: "Riyadh Park Second Challenge" },
+        { ...baseQuests[2], id: 8, title: "Al Khobar Foodie Again" },
+        { ...baseQuests[3], id: 9, title: "Dammam Art Walk Encore" },
+        { ...baseQuests[4], id: 10, title: "More City Projects Info" },
+    ];
+    const displayedQuests = quests; // Use the extended list
 
-    // }, [y, openY]); // Depend on spring value `y` and `openY` threshold
 
-        // Effect to control content scrollability based on drawer position
-        useEffect(() => {
-            const contentEl = contentRef.current;
-            if (contentEl) {
-                // Get the current numerical value from the spring animation
-                const currentY = y.get();
-                // Determine if the drawer is close enough to the open position to allow scrolling
-                const isEffectivelyOpen = currentY < openY + 50; // Increased tolerance slightly
-    
-                // Set the overflow style based on the condition
-                contentEl.style.overflowY = isEffectivelyOpen ? 'auto' : 'hidden';
-    
-                // Optional: Log state for debugging
-                // console.log(`useEffect - currentY: ${currentY.toFixed(2)}, openY: ${openY.toFixed(2)}, isScrollable: ${isEffectivelyOpen}`);
-            }
-            // This effect depends on the 'y' spring value and the 'openY' threshold.
-            // It will re-run whenever 'y' changes during the animation or 'openY' changes (e.g., on resize).
-        }, [y, openY]); // Dependency array includes the spring value 'y'
-
+    // --- Render ---
     return (
-        // Use animated.div for the spring animation
         <animated.div
-            className="fixed top-0 left-0 right-0 h-screen bg-white rounded-t-2xl shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.2)] z-30 touch-none overflow-hidden" // Apply touch-none here too for safety
+            className="fixed top-0 left-0 right-0 h-screen bg-white rounded-t-2xl shadow-2xl z-30 touch-none overflow-hidden" // touch-none on main container helps prevent page scroll
             style={{
-                transform: y.to(yVal => `translateY(${yVal}px)`), // Directly use y for translation
-                // Height is fixed to screen height, transform moves it into view
+                transform: y.to(yVal => `translateY(${yVal}px)`),
             }}
         >
-            {/* Drawer Handle - Apply drag handler here */}
-            <div
-                {...bind()} // Spread the drag properties onto the handle
-                className="w-full h-5 flex justify-center items-center cursor-grab active:cursor-grabbing"
-                // onClick={handleHandleClick} // Enable click toggle if desired
-                style={{ touchAction: 'pan-y' }} // Specifically allow vertical pan on handle
-            >
-                <div className="w-10 h-1 bg-gray-300 rounded-full"></div>
+            {/* --- Sticky Header --- */}
+            <div className="sticky top-0 left-0 right-0 bg-white z-10">
+                {/* Handle */}
+                <div
+                    {...bind()} // Drag handler bound primarily to the handle
+                    className="w-full h-5 flex justify-center items-center cursor-grab active:cursor-grabbing"
+                    style={{ touchAction: 'pan-y' }} // Explicitly allow vertical panning on handle
+                >
+                    <div className="w-10 h-1 bg-gray-300 rounded-full"></div>
+                </div>
+                {/* Title Area */}
+                <div className="px-4 pb-3 pt-1 border-b border-gray-200 flex items-center justify-between min-h-[48px]">
+                     {selectedQuest ? (
+                        <button onClick={handleBackToList} aria-label="Back to list" className="text-gray-600 hover:text-cyan-600 p-1 -ml-1 mr-2 transition-colors">
+                            <FiArrowLeft size={22} />
+                        </button>
+                    ) : ( <div className="w-8 flex-shrink-0"></div> )}
+
+                    <h2 className="text-lg font-semibold text-gray-800 text-center truncate flex-grow px-1">
+                        {selectedQuest ? selectedQuest.title : <div className="px-4 pt-4 pb-3 overflow-x-auto whitespace-nowrap">
+                            <div className="flex space-x-2">
+                                {filters.map((filter) => (
+                                    <FilterChip key={filter.id} {...filter} isActive={activeFilter === filter.id} onClick={() => setActiveFilter(filter.id)} />
+                                ))}
+                            </div>
+                        </div>}
+                    </h2>
+
+                     <div className="w-8 flex-shrink-0"></div>
+                </div>
             </div>
 
-            {/* Scrollable Content Area */}
-            {/* Subtract handle height from the total available height */}
+
+            {/* --- Scrollable Content Area --- */}
             <div
                 ref={contentRef}
-                className="h-[calc(100%-1.25rem)]" // Height is 100% minus handle height
+                // Apply custom scrollbar class
+                className={`h-[calc(100%-68px)] drawer-content-scrollable`}
                 style={{
-                    overflowY: 'hidden', // Default to hidden, controlled by useEffect
-                    touchAction: 'auto' // Allow normal touch actions (scrolling) within content
-                 }}
+                     overflowY: 'hidden', // Controlled by useEffect based on drawer state
+                     touchAction: 'auto' // Allow default touch actions (like scroll) within this element
+                }}
             >
-                <SearchAndFilters />
-                {/* Keep existing content structure */}
-                 <AddPlaceBanner />
-                 <WhatsNewSection />
-                 <QuickActionsSection />
-                <div className="h-20"></div> {/* More Padding at the bottom for scroll clearance */}
+                {selectedQuest ? (
+                    // ----- Render Quest Detail View -----
+                    <QuestDetailView quest={selectedQuest} />
+                ) : (
+                    // ----- Render Quest List View -----
+                    <>
+                        {/* Filter Chips */}
+                        <div className="px-4 pt-4 pb-3 overflow-x-auto whitespace-nowrap">
+                            <div className="flex space-x-2">
+                                {filters.map((filter) => (
+                                    <FilterChip key={filter.id} {...filter} isActive={activeFilter === filter.id} onClick={() => setActiveFilter(filter.id)} />
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Content Type Toggles */}
+                        <div className="px-4 py-2 border-t border-b border-gray-200 flex items-center justify-around">
+                             <button onClick={() => setActiveToggle('official')} className={`flex items-center space-x-1 py-1 px-2 rounded text-sm transition-colors ${activeToggle === 'official' ? 'text-cyan-600 font-semibold' : 'text-gray-500 hover:text-gray-700'}`}> <FiCheckCircle size={16} /> <span>Official</span> </button>
+                             <div className="h-4 w-px bg-gray-200"></div>
+                             <button onClick={() => setActiveToggle('user')} className={`flex items-center space-x-1 py-1 px-2 rounded text-sm transition-colors ${activeToggle === 'user' ? 'text-cyan-600 font-semibold' : 'text-gray-500 hover:text-gray-700'}`}> <FiUserCheck size={16} /> <span>User</span> </button>
+                             <div className="h-4 w-px bg-gray-200"></div>
+                             <button onClick={() => setActiveToggle('all')} className={`flex items-center space-x-1 py-1 px-2 rounded text-sm transition-colors ${activeToggle === 'all' ? 'text-cyan-600 font-semibold' : 'text-gray-500 hover:text-gray-700'}`}> <FiGlobe size={16} /> <span>All</span> </button>
+                        </div>
+
+                         {/* Sorting Options */}
+                         <div className="px-4 pt-3 pb-2 flex justify-end items-center space-x-3">
+                            <button onClick={() => setActiveSort('popular')} className={`text-xs font-medium flex items-center space-x-0.5 ${activeSort === 'popular' ? 'text-cyan-600' : 'text-gray-500 hover:text-gray-700'}`}> <FiStar size={14} /> <span>Popular</span> </button>
+                            <button onClick={() => setActiveSort('new')} className={`text-xs font-medium flex items-center space-x-0.5 ${activeSort === 'new' ? 'text-cyan-600' : 'text-gray-500 hover:text-gray-700'}`}> <FiTrendingUp size={14} /> <span>New</span> </button>
+                         </div>
+
+                         {/* Quest Card List */}
+                         <div className="px-4 pb-4 space-y-3">
+                            {displayedQuests.map((quest) => (
+                                <div key={quest.id} onClick={() => handleQuestSelect(quest)} className="cursor-pointer">
+                                     <QuestCard
+                                         imageUrl={quest.imageUrl}
+                                         title={quest.title}
+                                         rating={quest.rating}
+                                         places={quest.places}
+                                         joined={quest.joined}
+                                     />
+                                </div>
+                             ))}
+                         </div>
+
+                         {/* Padding at the bottom */}
+                         <div className="h-20"></div> {/* More bottom padding */}
+                     </> // End Fragment for list view
+                )}
             </div>
         </animated.div>
     );
