@@ -9,6 +9,7 @@ import StepCompletionPopup from './components/StepCompletionPopup'; // <-- Impor
 
 // Import Mock Data
 import { mockExperiences, mockUserProfile } from './data/mockData';
+import WelcomeScreen from "./components/WelcomeScreen";
 
 const BOTTOM_NAV_HEIGHT = 56;
 const MINIMIZED_DRAWER_PEEK_HEIGHT = 130;
@@ -37,27 +38,41 @@ const useFavorites = (initialFavorites = []) => {
 // --- Main App Component ---
 function App() {
     // --- Core State ---
+    const [showWelcome, setShowWelcome] = useState(true); // <-- New state for welcome screen
     const [isDrawerMinimized, setIsDrawerMinimized] = useState(true);
-    const [currentView, setCurrentView] = useState('initial');
-    const [showInitialModal, setShowInitialModal] = useState(true);
+    const [currentView, setCurrentView] = useState('welcome'); // <-- Start with 'welcome' view
+    const [showInitialModal, setShowInitialModal] = useState(false); // <-- Modal starts hidden
     const [selectedExperienceType, setSelectedExperienceType] = useState(null);
     const [selectedExperience, setSelectedExperience] = useState(null);
     const [activeBottomTab, setActiveBottomTab] = useState('Explore');
 
     // --- Mock Data State ---
+    // ... (mock data state remains the same)
     const [experiencesData, setExperiencesData] = useState(mockExperiences);
     const [userProfileData, setUserProfileData] = useState(mockUserProfile);
     const [favoriteExperienceIds, toggleFavorite] = useFavorites(userProfileData.savedExperiences);
 
+
     // --- Active Quest State ---
+    // ... (quest state remains the same)
     const [activeQuestProgress, setActiveQuestProgress] = useState(null);
 
     // --- UI Feedback State ---
-    const [stepCompletionMessage, setStepCompletionMessage] = useState(''); // For the popup
-    const [showRewardModal, setShowRewardModal] = useState(false); // For final reward
+    // ... (feedback state remains the same)
+    const [stepCompletionMessage, setStepCompletionMessage] = useState('');
+    const [showRewardModal, setShowRewardModal] = useState(false);
 
 
     // --- Handlers ---
+
+    // --- NEW: Handle click on Welcome Screen ---
+    const handleStartFromWelcome = useCallback(() => {
+        setShowWelcome(false); // Hide welcome screen
+        setShowInitialModal(true); // Show the Kunuz/Masar modal
+        // No need to change currentView here yet, modal handles next step
+    }, []);
+
+    // ... (handleMapClick, handleExpandRequest, handleMinimizeRequest, handleSearchFocus remain the same)
     const handleMapClick = useCallback(() => {
         if (!isDrawerMinimized && currentView !== 'mapInteraction') {
             setIsDrawerMinimized(true);
@@ -87,21 +102,26 @@ function App() {
         }
     }, [isDrawerMinimized, currentView, selectedExperienceType]);
 
+
+    // Modified: This now runs AFTER the modal is shown and a selection is made
     const handleInitialSelection = (type) => {
         setSelectedExperienceType(type);
-        setCurrentView('list');
-        setShowInitialModal(false);
-        setIsDrawerMinimized(false);
-        setActiveBottomTab('Experiences');
+        setCurrentView('list'); // Go to list view
+        setShowInitialModal(false); // Hide the modal
+        setIsDrawerMinimized(false); // Expand drawer for list
+        setActiveBottomTab('Experiences'); // Set correct tab
     };
 
+    // Modified: This runs if the modal is closed WITHOUT making a selection
     const handleCloseInitialModal = () => {
-        setShowInitialModal(false);
-        setCurrentView('map');
-        setIsDrawerMinimized(true);
-        setActiveBottomTab('Explore');
+        setShowInitialModal(false); // Hide the modal
+        // Decide what to do now - maybe go to map explore view?
+        setCurrentView('map'); // Go to map view
+        setIsDrawerMinimized(true); // Minimize drawer for map
+        setActiveBottomTab('Explore'); // Set Explore tab
     };
 
+    // ... (handleExperienceSelect, handleBackToList, handleStartExperience, handleViewMapForExperience, handleSubmitKunuzStep, handleDismissStepPopup, handleCloseRewardModal, handleTabChange, handleCloseProfile remain the same)
     const handleExperienceSelect = useCallback((experience) => {
         setSelectedExperience(experience);
         setCurrentView('detail');
@@ -120,7 +140,6 @@ function App() {
         setShowRewardModal(false);
     }, []);
 
-    // --- Start Experience ---
     const handleStartExperience = useCallback((experience) => {
         console.log("Starting experience:", experience.id);
         setSelectedExperience(experience);
@@ -143,7 +162,6 @@ function App() {
 
     }, []);
 
-    // --- View Map (Passive) ---
     const handleViewMapForExperience = useCallback((experience) => {
         console.log("Viewing map for experience:", experience.id);
         setSelectedExperience(experience);
@@ -154,7 +172,6 @@ function App() {
         setShowRewardModal(false);
     }, []);
 
-    // --- Submit Kunuz Step ---
     const handleSubmitKunuzStep = useCallback((stepId, submissionData) => {
         console.log(`Submitting Step ${stepId}:`, submissionData);
         if (!selectedExperience || selectedExperience.type !== 'Kunuz' || !activeQuestProgress) {
@@ -262,7 +279,6 @@ function App() {
     const handleCloseRewardModal = useCallback(() => {
         setShowRewardModal(false);
         // Optionally navigate away after closing reward modal
-        // handleBackToList(); // Example: Go back to list view
         if (selectedExperience) {
             handleExperienceSelect(selectedExperience); // Go back to detail view
         } else {
@@ -271,11 +287,14 @@ function App() {
     }, [selectedExperience, handleExperienceSelect, handleBackToList]); // Add dependencies
 
 
-    // --- Navigation ---
     const handleTabChange = useCallback((tabName, viewTarget) => {
         setActiveBottomTab(tabName);
         setShowRewardModal(false); // Close modals on nav change
         setStepCompletionMessage('');
+
+        // Ensure welcome/initial modal flow is bypassed if already started
+        setShowWelcome(false);
+        setShowInitialModal(false);
 
         if (viewTarget === 'list') {
             setCurrentView('list');
@@ -300,85 +319,107 @@ function App() {
             setActiveQuestProgress(null);
             setIsDrawerMinimized(true);
         }
-    }, [selectedExperienceType]);
+    }, [selectedExperienceType]); // Removed showWelcome/showInitialModal from deps as they are set directly
 
     const handleCloseProfile = useCallback(() => {
+        // Ensure welcome/initial modal flow is bypassed
+        setShowWelcome(false);
+        setShowInitialModal(false);
+
         setCurrentView('list'); // Go back to list view after closing profile
         setActiveBottomTab('Experiences');
         if (!selectedExperienceType) setSelectedExperienceType('Kunuz'); // Ensure type is set for list
-    }, [selectedExperienceType]);
+    }, [selectedExperienceType]); // Removed showWelcome/showInitialModal from deps
 
 
     return (
         <div className="relative h-screen w-screen flex flex-col bg-gray-800 overflow-hidden">
 
-            {/* Initial Selection Modal */}
-            {showInitialModal && (
-                <ExperienceSelectionModal
-                    onSelect={handleInitialSelection}
-                    onClose={handleCloseInitialModal}
-                />
+            {/* --- Render Welcome Screen --- */}
+            {showWelcome && (
+                <WelcomeScreen onStart={handleStartFromWelcome} />
             )}
 
-            {/* Main Content Area (Map) */}
-            <div className="flex-grow relative">
-                <MapView
-                    onMapClick={handleMapClick}
-                    isDrawerMinimized={isDrawerMinimized}
-                    bottomNavHeight={BOTTOM_NAV_HEIGHT}
-                    minimizedDrawerPeekHeight={MINIMIZED_DRAWER_PEEK_HEIGHT}
-                    currentView={currentView}
-                    selectedExperience={selectedExperience}
-                    activeQuestProgress={activeQuestProgress}
-                    // Pass key for re-rendering map center if needed, e.g. based on selectedExperience.id
-                    key={selectedExperience?.id || 'map-default'}
-                />
-            </div>
+            {/* --- Conditionally Render Main UI --- */}
+            {!showWelcome && (
+                <>
+                    {/* Initial Selection Modal (now shown AFTER welcome) */}
+                    {showInitialModal && (
+                        <ExperienceSelectionModal
+                            onSelect={handleInitialSelection}
+                            onClose={handleCloseInitialModal}
+                        />
+                    )}
 
-            {/* Interactive Drawer */}
-            <InteractiveDrawer
-                isMinimized={isDrawerMinimized}
-                onExpandRequest={handleExpandRequest}
-                onMinimizeRequest={handleMinimizeRequest}
-                onSearchFocusRequest={handleSearchFocus}
-                bottomNavHeight={BOTTOM_NAV_HEIGHT}
-                minimizedDrawerPeekHeight={MINIMIZED_DRAWER_PEEK_HEIGHT}
-                currentView={currentView}
-                selectedExperienceType={selectedExperienceType}
-                selectedExperience={selectedExperience}
-                experiencesData={experiencesData}
-                userProfileData={userProfileData}
-                activeQuestProgress={activeQuestProgress}
-                favoriteExperienceIds={favoriteExperienceIds}
-                onExperienceSelect={handleExperienceSelect}
-                onBackToList={handleBackToList}
-                onStartExperience={handleStartExperience}
-                onViewMapForExperience={handleViewMapForExperience}
-                onSubmitKunuzStep={handleSubmitKunuzStep}
-                onToggleFavorite={toggleFavorite}
-                onViewProfile={() => handleTabChange('Profile', 'profile')}
-                onCloseProfile={handleCloseProfile}
-            />
+                    {/* Main Content Area (Map) - Don't render during modal */}
+                    {!showInitialModal && currentView !== 'welcome' && (
+                        <div className="flex-grow relative">
+                            <MapView
+                                onMapClick={handleMapClick}
+                                isDrawerMinimized={isDrawerMinimized}
+                                bottomNavHeight={BOTTOM_NAV_HEIGHT}
+                                minimizedDrawerPeekHeight={MINIMIZED_DRAWER_PEEK_HEIGHT}
+                                currentView={currentView}
+                                selectedExperience={selectedExperience}
+                                activeQuestProgress={activeQuestProgress}
+                                key={selectedExperience?.id || 'map-default'}
+                            />
+                        </div>
+                    )}
 
-            {/* Bottom Navigation */}
-            <BottomNavigationBar
-                activeTab={activeBottomTab}
-                onTabChange={handleTabChange}
-            />
 
-            {/* Step Completion Popup */}
-            <StepCompletionPopup
-                message={stepCompletionMessage}
-                isVisible={!!stepCompletionMessage}
-                onDismiss={handleDismissStepPopup}
-            />
+                    {/* Interactive Drawer - Don't render during modal */}
+                    {!showInitialModal && currentView !== 'welcome' && (
+                        <InteractiveDrawer
+                            isMinimized={isDrawerMinimized}
+                            onExpandRequest={handleExpandRequest}
+                            onMinimizeRequest={handleMinimizeRequest}
+                            onSearchFocusRequest={handleSearchFocus}
+                            bottomNavHeight={BOTTOM_NAV_HEIGHT}
+                            minimizedDrawerPeekHeight={MINIMIZED_DRAWER_PEEK_HEIGHT}
+                            currentView={currentView}
+                            selectedExperienceType={selectedExperienceType}
+                            selectedExperience={selectedExperience}
+                            experiencesData={experiencesData}
+                            userProfileData={userProfileData}
+                            activeQuestProgress={activeQuestProgress}
+                            favoriteExperienceIds={favoriteExperienceIds}
+                            onExperienceSelect={handleExperienceSelect}
+                            onBackToList={handleBackToList}
+                            onStartExperience={handleStartExperience}
+                            onViewMapForExperience={handleViewMapForExperience}
+                            onSubmitKunuzStep={handleSubmitKunuzStep}
+                            onToggleFavorite={toggleFavorite}
+                            onViewProfile={() => handleTabChange('Profile', 'profile')}
+                            onCloseProfile={handleCloseProfile}
+                        />
+                    )}
 
-            {/* Reward Modal */}
-            {showRewardModal && selectedExperience?.prize && (
-                <RewardModal
-                    prize={selectedExperience.prize}
-                    onClose={handleCloseRewardModal}
-                />
+
+                    {/* Bottom Navigation - Don't render during modal */}
+                    {!showInitialModal && currentView !== 'welcome' && (
+                        <BottomNavigationBar
+                            activeTab={activeBottomTab}
+                            onTabChange={handleTabChange}
+                        />
+                    )}
+
+
+                    {/* Step Completion Popup */}
+                    <StepCompletionPopup
+                        message={stepCompletionMessage}
+                        isVisible={!!stepCompletionMessage}
+                        onDismiss={handleDismissStepPopup}
+                    />
+
+                    {/* Reward Modal */}
+                    {showRewardModal && selectedExperience?.prize && (
+                        <RewardModal
+                            prize={selectedExperience.prize}
+                            onClose={handleCloseRewardModal}
+                        />
+                    )}
+                </>
             )}
         </div>
     );
