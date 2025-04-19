@@ -5,7 +5,7 @@ import BottomNavigationBar from './components/BottomNavigationBar';
 
 const BOTTOM_NAV_HEIGHT = 56; // Standard bottom nav height
 // INCREASED Peek Height: Needs space for Handle (~20px) + Categories (~50px) + Search (~50px) + Padding (~10-20px)
-const MINIMIZED_DRAWER_PEEK_HEIGHT = 155; // Adjust this value as needed based on exact styling
+const MINIMIZED_DRAWER_PEEK_HEIGHT = 90; // Adjust this value as needed based on exact styling
 
 function App() {
     const [isDrawerMinimized, setIsDrawerMinimized] = useState(true); // Start minimized

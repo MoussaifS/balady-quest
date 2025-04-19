@@ -8,12 +8,12 @@ function QuestCard({ imageUrl, title, rating, places, joined, onClick }) {
             className="flex bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-150 ease-in-out cursor-pointer active:bg-gray-50"
         >
             {/* Image Section */}
-            <div className="flex-shrink-0 w-24 sm:w-28">
+            <div className="flex-shrink-0 w-24 sm:w-28 m-1 p-0.5 border-2 border-blue-950 rounded-xl overflow-hidden">
                 {imageUrl ? (
                     <img
                         src={imageUrl}
                         alt={title}
-                        className="w-full h-full object-cover"
+                        className="w-[100px] h-[140px] object-cover rounded-lg overflow-hidden"
                     />
                 ) : (
                     <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-400">
@@ -27,7 +27,7 @@ function QuestCard({ imageUrl, title, rating, places, joined, onClick }) {
                 <div>
                     <h3 className="font-semibold text-gray-800 mb-1 text-sm leading-snug">{title}</h3>
                 </div>
-                <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 mt-1.5">
+                <div className="flex flex-col gap-x-3 gap-y-1 text-xs text-gray-500 mt-1.5">
                     {rating !== undefined && rating !== null && (
                         <span className="flex items-center">
               <FiStar className="w-3.5 h-3.5 text-yellow-500 mr-0.5 fill-current" /> {/* Fill star */}

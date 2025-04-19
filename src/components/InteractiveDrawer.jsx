@@ -87,17 +87,17 @@ function InteractiveDrawer({
     ];
     const baseQuests = [
         {
-            id: 1, imageUrl: 'https://via.placeholder.com/150/771796', title: 'Historic Jeddah Exploration', rating: 4.8, places: 8, joined: 1250,
+            id: 1, imageUrl: './images/exp/1.png', title: 'Historic Jeddah Exploration', rating: 4.8, places: 8, joined: 1250,
             description: "Discover the secrets of Al-Balad, Jeddah's historic heart. Follow clues through ancient alleyways, learn about traditional architecture, and experience the vibrant culture of this UNESCO World Heritage site.",
             reviews: [ { id: 'r1', user: 'Ahmed K.', rating: 5, text: "Amazing experience! Learned so much.", media: [] }, { id: 'r2', user: 'Fatima S.', rating: 4, text: "Fun trail, well organized.", media: ['https://via.placeholder.com/100/aabbcc'] }, { id: 'r3', user: 'Omar B.', rating: 5, text: "Highly recommended for families.", media: [] }, ]
         }, {
-            id: 2, imageUrl: 'https://via.placeholder.com/150/24f355', title: 'Riyadh Park Discovery Challenge', rating: 4.5, places: 5, joined: 870,
+            id: 2, imageUrl: './images/exp/2.png', title: 'Riyadh Park Discovery Challenge', rating: 4.5, places: 5, joined: 870,
             description: "Explore the vast Riyadh Park through an interactive challenge. Find hidden spots, answer trivia about local flora, and enjoy the green spaces.",
             reviews: [ { id: 'r4', user: 'Layla M.', rating: 4, text: "Great way to spend an afternoon.", media: [] }, { id: 'r5', user: 'Youssef A.', rating: 5, text: "Kids loved the challenges!", media: ['https://via.placeholder.com/100/ccbbaa', 'https://via.placeholder.com/100/ddeeff'] }, ]
         },
-        { id: 3, imageUrl: 'https://via.placeholder.com/150/d32776', title: 'Al Khobar Corniche Foodie Quest', rating: 4.9, places: 6, joined: 1500, description: "Taste your way along the Corniche! Find the best spots for local delicacies and international treats.", reviews: [] },
-        { id: 4, imageUrl: 'https://via.placeholder.com/150/f66b97', title: 'Dammam Waterfront Art Walk', rating: 4.3, places: 7, joined: 640, description: "Discover stunning local art installations and sculptures dotted along the beautiful Dammam waterfront.", reviews: [] },
-        { id: 5, imageUrl: 'https://via.placeholder.com/150/56a8c2', title: 'Understanding New City Projects', rating: null, places: 4, joined: 320, description: "Learn about the exciting upcoming developments and infrastructure projects shaping your city's future.", reviews: [] },
+        { id: 3, imageUrl: './images/exp/3.png', title: 'Al Khobar Corniche Foodie Quest', rating: 4.9, places: 6, joined: 1500, description: "Taste your way along the Corniche! Find the best spots for local delicacies and international treats.", reviews: [] },
+        { id: 4, imageUrl: './images/exp/4.png', title: 'Dammam Waterfront Art Walk', rating: 4.3, places: 7, joined: 640, description: "Discover stunning local art installations and sculptures dotted along the beautiful Dammam waterfront.", reviews: [] },
+        { id: 5, imageUrl: './images/exp/5.png', title: 'Understanding New City Projects', rating: null, places: 4, joined: 320, description: "Learn about the exciting upcoming developments and infrastructure projects shaping your city's future.", reviews: [] },
     ];
     // Duplicate quests for testing scrolling
     const quests = [

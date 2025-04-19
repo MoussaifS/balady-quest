@@ -6,9 +6,9 @@ function CategoryChip({ icon: Icon, label, onClick }) {
     return (
         <button
             onClick={onClick}
-            className="flex-shrink-0 flex flex-col items-center space-y-1 px-2 py-1.5 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors duration-150 ease-in-out whitespace-nowrap w-[65px] text-center" // Adjusted width/padding
+            className="flex-shrink-0 flex flex-row items-center space-y-1 px-2 py-1.5 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors duration-150 ease-in-out whitespace-nowrap w-[100px] text-center" // Adjusted width/padding
         >
-            {Icon && <Icon size={18} className='mb-0.5' />}
+            {Icon && <Icon size={18} className='mr-1 mt-1' />}
             <span>{label}</span>
         </button>
     );
@@ -31,7 +31,7 @@ function SearchAndFilters({ isMinimized, onSearchFocus }) {
         <div className={`px-4 ${isMinimized ? 'pt-1 pb-3' : 'pt-0 pb-3'}`}> {/* Adjust padding */}
 
             {/* Category Filters - ONLY visible when drawer is minimized */}
-            {isMinimized && (
+            {!isMinimized && (
                 // Ensure this section flows correctly and allows scrolling if needed
                 <div className="mb-3 flex justify-between items-center space-x-1 overflow-x-auto pb-1 scrollbar-hide"> {/* Added scrollbar-hide utility if using Tailwind extensions */}
                     {categoryFilters.map(filter => (
