@@ -7,7 +7,7 @@ export const mockExperiences = [
         type: 'Kunuz',
         title: 'Historic Jeddah Treasure Trail',
         description: "Uncover the hidden gems of Al-Balad! Solve clues, scan markers, and race against time to find the final treasure. A fun challenge for history buffs.",
-        imageUrl: '/images/placeholder-jeddah.png', // Use relative paths or import images
+        imageUrl: '/images/exp/placeholder-jeddah.png', // Use relative paths or import images
         creator: 'Balady Official',
         category: 'Culture',
         rating: 4.8,
@@ -34,7 +34,7 @@ export const mockExperiences = [
         type: 'Kunuz',
         title: 'Riyadh Park Runner Challenge',
         description: "Test your speed and observation skills in Riyadh Park. Complete quick tasks at different landmarks. Fastest times win!",
-        imageUrl: '/images/placeholder-riyadh.png',
+        imageUrl: '/images/exp/placeholder-riyadh.png',
         creator: 'Riyadh Municipality',
         category: 'Sports',
         rating: 4.5,
@@ -57,17 +57,17 @@ export const mockExperiences = [
         type: 'Masarat',
         title: 'Al Khobar Corniche Art Walk',
         description: "Enjoy a relaxing stroll along the Khobar Corniche, discovering beautiful sculptures and viewpoints. Learn about each piece as you go.",
-        imageUrl: '/images/placeholder-khobar.png',
+        imageUrl: '/images/exp/placeholder-khobar.png',
         creator: 'Eastern Province Tourism',
         category: 'Art & Culture',
         rating: 4.6,
         difficulty: 'Easy',
         estimatedDuration: '1h 30m',
         path: [
-            { id: 'm1p1', title: 'The Pearl Monument', description: 'Iconic landmark representing the region\'s heritage.', location: [26.2917, 50.2187], imageUrl: '/images/placeholder-pearl.png' },
-            { id: 'm1p2', title: 'Kinetic Wind Sculpture', description: 'A mesmerizing piece that moves with the sea breeze.', location: [26.2930, 50.2195], imageUrl: '/images/placeholder-wind.png' },
-            { id: 'm1p3', title: 'Calligraphy Bench', description: 'Rest on this unique bench featuring Arabic calligraphy.', location: [26.2945, 50.2205], imageUrl: '/images/placeholder-bench.png' },
-            { id: 'm1p4', title: 'Seagull Flock Installation', description: 'A dynamic representation of coastal life.', location: [26.2960, 50.2215], imageUrl: '/images/placeholder-seagulls.png' },
+            { id: 'm1p1', title: 'The Pearl Monument', description: 'Iconic landmark representing the region\'s heritage.', location: [26.2917, 50.2187], imageUrl: '/images/exp/1.png' },
+            { id: 'm1p2', title: 'Kinetic Wind Sculpture', description: 'A mesmerizing piece that moves with the sea breeze.', location: [26.2930, 50.2195], imageUrl: '/images/exp/2.png' },
+            { id: 'm1p3', title: 'Calligraphy Bench', description: 'Rest on this unique bench featuring Arabic calligraphy.', location: [26.2945, 50.2205], imageUrl: '/images/exp/3.png' },
+            { id: 'm1p4', title: 'Seagull Flock Installation', description: 'A dynamic representation of coastal life.', location: [26.2960, 50.2215], imageUrl: '/images/exp/4.png' },
         ],
     },
     {
@@ -75,23 +75,23 @@ export const mockExperiences = [
         type: 'Masarat',
         title: 'Dammam Heritage Trail',
         description: "Explore the historical roots of Dammam, visiting key sites that tell the story of the city's past.",
-        imageUrl: '/images/placeholder-dammam.png',
+        imageUrl: '/images/exp/placeholder-dammam.png',
         creator: 'Balady Official',
         category: 'History',
         rating: 4.3,
         difficulty: 'Medium',
         estimatedDuration: '2h 0m',
         path: [
-            { id: 'm2p1', title: 'Old Dammam Port Area', description: 'Witness the remnants of the original fishing port.', location: [26.4333, 50.1167], imageUrl: '/images/placeholder-port.png' },
-            { id: 'm2p2', title: 'Heritage Village (Replica)', description: 'Experience traditional architecture and crafts.', location: [26.4300, 50.1100], imageUrl: '/images/placeholder-village.png' }, // Example location
-            { id: 'm2p3', title: 'King Fahd Park Mosque', description: 'Notable architectural landmark in the area.', location: [26.4250, 50.1050], imageUrl: '/images/placeholder-mosque.png' },
+            { id: 'm2p1', title: 'Old Dammam Port Area', description: 'Witness the remnants of the original fishing port.', location: [26.4333, 50.1167], imageUrl: '/images/exp/4.png' },
+            { id: 'm2p2', title: 'Heritage Village (Replica)', description: 'Experience traditional architecture and crafts.', location: [26.4300, 50.1100], imageUrl: '/images/exp/5.png' }, // Example location
+            { id: 'm2p3', title: 'King Fahd Park Mosque', description: 'Notable architectural landmark in the area.', location: [26.4250, 50.1050], imageUrl: '/images/exp/2.png' },
         ],
     }
 ];
 
 export const mockUserProfile = {
     name: 'Abdullah Alghamdi',
-    avatarUrl: '/images/user-avatar.png', // Placeholder
+    avatarUrl: '/images/exp/user-avatar.png', // Placeholder
     points: 1850,
     badges: [
         { id: 'b1', name: 'Jeddah Explorer', icon: FiAward, date: '2024-03-15' },
