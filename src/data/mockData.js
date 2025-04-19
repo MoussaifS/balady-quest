@@ -1,3 +1,4 @@
+// src/data/mockData.js
 import { FiAward, FiBox, FiCamera, FiHelpCircle, FiMapPin, FiSmile } from 'react-icons/fi';
 
 export const mockExperiences = [
@@ -7,7 +8,7 @@ export const mockExperiences = [
         type: 'Kunuz',
         title: 'Historic Jeddah Treasure Trail',
         description: "Uncover the hidden gems of Al-Balad! Solve clues, scan markers, and race against time to find the final treasure. A fun challenge for history buffs.",
-        imageUrl: '/images/exp/placeholder-jeddah.png', // Use relative paths or import images
+        imageUrl: '/images/exp/placeholder-jeddah.png',
         creator: 'Balady Official',
         category: 'Culture',
         rating: 4.8,
@@ -16,17 +17,39 @@ export const mockExperiences = [
         timeLimit: '2h 0m', // Or represent in seconds if needed for calculation
         status: 'active', // 'active', 'upcoming', 'finished'
         points: 150,
+        participants: 1250, // <-- Added participants count
         steps: [
-            { id: 'k1s1', type: 'location', hint: 'Start at the historic Naseef House. Find the oldest door.', location: [21.4858, 39.1864], points: 20 },
+            // Step 1: Changed to QA
+            {
+                id: 'k1s1',
+                type: 'qa', // <-- Changed from 'location'
+                hint: 'Start at the historic Naseef House. What material are the large ground-floor doors primarily made of?',
+                location: [21.4858, 39.1864],
+                question: 'What material are the large ground-floor doors primarily made of?', // <-- Added question
+                answer: 'wood', // <-- Added answer (case-insensitive check needed)
+                points: 20
+            },
             { id: 'k1s2', type: 'qa', hint: 'Near Baeshen House, what year is inscribed above the main entrance?', location: [21.4865, 39.1859], question: 'What year is inscribed above the main entrance?', answer: '1325', points: 30 },
             { id: 'k1s3', type: 'qr', hint: 'Find the QR code hidden near the Matbouli House Museum entrance.', location: [21.4870, 39.1868], qrValue: 'BALADYJEDDAHSECRET1', points: 40 },
             { id: 'k1s4', type: 'photo', hint: 'Take a picture of the most colorful Roshan (wooden lattice window) you can find in the Souq Al Alawi area.', location: [21.4850, 39.1875], photoPrompt: 'Capture a vibrant Roshan', points: 30 },
-            { id: 'k1s5', type: 'location', hint: 'The final clue awaits at the Bab Makkah gate. Reach it to claim your prize!', location: [21.4833, 39.1911], points: 30 },
+            // Step 5: Changed to Photo (could be QA or QR too)
+            {
+                id: 'k1s5',
+                type: 'photo', // <-- Changed from 'location'
+                hint: 'The final point is Bab Makkah. Take a photo proving you are there!',
+                location: [21.4833, 39.1911],
+                photoPrompt: 'Capture the Bab Makkah gate entrance', // <-- Added photo prompt
+                points: 30
+            },
         ],
         leaderboard: [
-            { rank: 1, name: 'Speedy Explorers', score: 150, time: '1h 15m' },
-            { rank: 2, name: 'Team Al-Balad', score: 150, time: '1h 28m' },
-            { rank: 3, name: 'Desert Nomads', score: 120, time: '1h 45m' },
+            { rank: 1, name: 'Speedy Explorers', score: 150, time: '1h 15m', avatarUrl: '/images/avatars/avatar1.png' }, // <-- Added avatarUrl
+            { rank: 2, name: 'Team Al-Balad', score: 150, time: '1h 28m', avatarUrl: '/images/avatars/avatar2.png' }, // <-- Added avatarUrl
+            { rank: 3, name: 'Desert Nomads', score: 120, time: '1h 45m', avatarUrl: '/images/avatars/avatar3.png' }, // <-- Added avatarUrl
+        ],
+        reviews: [ // Added example reviews
+            { id: 'r1', user: 'Ali M.', rating: 5, text: "So much fun! The clues were challenging but fair.", avatarUrl: '/images/avatars/avatar4.png' },
+            { id: 'r2', user: 'Noor H.', rating: 4, text: "Great way to explore the area. Wish there was a bit more time.", avatarUrl: '/images/avatars/avatar5.png' },
         ]
     },
     {
@@ -43,12 +66,31 @@ export const mockExperiences = [
         timeLimit: '1h 0m',
         status: 'upcoming',
         points: 100,
+        participants: 870, // <-- Added participants count
         steps: [
-            { id: 'k2s1', type: 'location', hint: 'Start at the main fountain.', location: [24.7500, 46.6900], points: 25 }, // Placeholder coords
+            // Step 1: Changed to QA
+            {
+                id: 'k2s1',
+                type: 'qa', // <-- Changed from 'location'
+                hint: 'Start at the main fountain. How many large water jets are in the central ring?',
+                location: [24.7500, 46.6900],
+                question: 'How many large water jets are in the central ring?', // <-- Added question
+                answer: '8', // <-- Added answer (example)
+                points: 25
+            },
             { id: 'k2s2', type: 'photo', hint: 'Take a selfie with the giant flower sculpture.', location: [24.7510, 46.6910], photoPrompt: 'Selfie with flower sculpture', points: 35 },
-            { id: 'k2s3', type: 'location', hint: 'Reach the boating lake viewpoint.', location: [24.7490, 46.6920], points: 40 },
+            // Step 3: Changed to QR
+            {
+                id: 'k2s3',
+                type: 'qr', // <-- Changed from 'location'
+                hint: 'Reach the boating lake viewpoint. Find the QR code on the information sign.',
+                location: [24.7490, 46.6920],
+                qrValue: 'RIYADHPARKFINISH', // <-- Added QR value
+                points: 40
+            },
         ],
-        leaderboard: []
+        leaderboard: [], // Add avatars if you add entries
+        reviews: []
     },
 
     // --- Masarat (Experiences) ---
@@ -63,12 +105,17 @@ export const mockExperiences = [
         rating: 4.6,
         difficulty: 'Easy',
         estimatedDuration: '1h 30m',
+        participants: 2100, // <-- Added participants count
         path: [
             { id: 'm1p1', title: 'The Pearl Monument', description: 'Iconic landmark representing the region\'s heritage.', location: [26.2917, 50.2187], imageUrl: '/images/exp/1.png' },
             { id: 'm1p2', title: 'Kinetic Wind Sculpture', description: 'A mesmerizing piece that moves with the sea breeze.', location: [26.2930, 50.2195], imageUrl: '/images/exp/2.png' },
             { id: 'm1p3', title: 'Calligraphy Bench', description: 'Rest on this unique bench featuring Arabic calligraphy.', location: [26.2945, 50.2205], imageUrl: '/images/exp/3.png' },
             { id: 'm1p4', title: 'Seagull Flock Installation', description: 'A dynamic representation of coastal life.', location: [26.2960, 50.2215], imageUrl: '/images/exp/4.png' },
         ],
+        reviews: [ // Added example reviews
+            { id: 'r3', user: 'Sara B.', rating: 4, text: "Lovely walk, very informative points.", avatarUrl: '/images/avatars/avatar6.png' },
+            { id: 'r4', user: 'Omar K.', rating: 5, text: "Perfect for a weekend afternoon. Well planned.", avatarUrl: '/images/avatars/avatar7.png' },
+        ]
     },
     {
         id: 'm2',
@@ -81,17 +128,20 @@ export const mockExperiences = [
         rating: 4.3,
         difficulty: 'Medium',
         estimatedDuration: '2h 0m',
+        participants: 950, // <-- Added participants count
         path: [
             { id: 'm2p1', title: 'Old Dammam Port Area', description: 'Witness the remnants of the original fishing port.', location: [26.4333, 50.1167], imageUrl: '/images/exp/4.png' },
             { id: 'm2p2', title: 'Heritage Village (Replica)', description: 'Experience traditional architecture and crafts.', location: [26.4300, 50.1100], imageUrl: '/images/exp/5.png' }, // Example location
             { id: 'm2p3', title: 'King Fahd Park Mosque', description: 'Notable architectural landmark in the area.', location: [26.4250, 50.1050], imageUrl: '/images/exp/2.png' },
         ],
+        reviews: []
     }
 ];
 
+// Keep mockUserProfile the same, or add avatar URLs if needed elsewhere
 export const mockUserProfile = {
     name: 'Abdullah Alghamdi',
-    avatarUrl: '/images/exp/user-avatar.png', // Placeholder
+    avatarUrl: '/images/avatars/user-avatar.png', // Use a consistent path
     points: 1850,
     badges: [
         { id: 'b1', name: 'Jeddah Explorer', icon: FiAward, date: '2024-03-15' },

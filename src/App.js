@@ -1,219 +1,241 @@
+// src/App.js
 import React, { useState, useCallback, useEffect } from 'react';
 import MapView from './components/MapView';
 import InteractiveDrawer from './components/InteractiveDrawer';
 import BottomNavigationBar from './components/BottomNavigationBar';
 import ExperienceSelectionModal from './components/ExperienceSelectionModal';
+import RewardModal from './components/RewardModal'; // <-- Import Reward Modal
+import StepCompletionPopup from './components/StepCompletionPopup'; // <-- Import Step Popup
 
 // Import Mock Data
 import { mockExperiences, mockUserProfile } from './data/mockData';
 
 const BOTTOM_NAV_HEIGHT = 56;
-const MINIMIZED_DRAWER_PEEK_HEIGHT = 90;
+const MINIMIZED_DRAWER_PEEK_HEIGHT = 130;
 
-// Helper to manage favorite IDs (using Set for efficiency)
+// --- useFavorites Hook (Keep as is) ---
 const useFavorites = (initialFavorites = []) => {
     const [favoriteIds, setFavoriteIds] = useState(new Set(initialFavorites));
-
     const toggleFavorite = useCallback((experienceId) => {
         setFavoriteIds(prev => {
             const newSet = new Set(prev);
             if (newSet.has(experienceId)) {
                 newSet.delete(experienceId);
-                console.log("Removed favorite:", experienceId);
             } else {
                 newSet.add(experienceId);
-                console.log("Added favorite:", experienceId);
             }
-            // Persist to localStorage maybe?
-            // localStorage.setItem('favoriteExperienceIds', JSON.stringify(Array.from(newSet)));
+            // Add localStorage persistence if needed
             return newSet;
         });
     }, []);
-
-    // Load from localStorage on mount (optional)
     useEffect(() => {
-        // const storedFavorites = localStorage.getItem('favoriteExperienceIds');
-        // if (storedFavorites) {
-        //     try {
-        //         setFavoriteIds(new Set(JSON.parse(storedFavorites)));
-        //     } catch (e) { console.error("Failed to load favorites", e); }
-        // }
-        // For demo, use initial favorites from mock data
         setFavoriteIds(new Set(mockUserProfile.savedExperiences || []));
     }, []);
-
-
     return [favoriteIds, toggleFavorite];
 };
 
 // --- Main App Component ---
 function App() {
     // --- Core State ---
-    const [isDrawerMinimized, setIsDrawerMinimized] = useState(true); // Drawer physical state
-    const [currentView, setCurrentView] = useState('initial'); // 'initial', 'list', 'detail', 'profile', 'mapInteraction', 'services'
-    const [showInitialModal, setShowInitialModal] = useState(true); // Control the first popup
-    const [selectedExperienceType, setSelectedExperienceType] = useState(null); // 'Kunuz' or 'Masarat'
-    const [selectedExperience, setSelectedExperience] = useState(null); // The actual experience object
-    const [activeBottomTab, setActiveBottomTab] = useState('Explore'); // For bottom nav highlight
+    const [isDrawerMinimized, setIsDrawerMinimized] = useState(true);
+    const [currentView, setCurrentView] = useState('initial');
+    const [showInitialModal, setShowInitialModal] = useState(true);
+    const [selectedExperienceType, setSelectedExperienceType] = useState(null);
+    const [selectedExperience, setSelectedExperience] = useState(null);
+    const [activeBottomTab, setActiveBottomTab] = useState('Explore');
 
     // --- Mock Data State ---
     const [experiencesData, setExperiencesData] = useState(mockExperiences);
     const [userProfileData, setUserProfileData] = useState(mockUserProfile);
     const [favoriteExperienceIds, toggleFavorite] = useFavorites(userProfileData.savedExperiences);
 
-    // --- Active Quest State (Example - needs more robust logic for timers etc.) ---
+    // --- Active Quest State ---
     const [activeQuestProgress, setActiveQuestProgress] = useState(null);
-    // { currentStepIndex: 0, points: 0, timeRemaining: '2h 0m', completedSteps: {} }
+
+    // --- UI Feedback State ---
+    const [stepCompletionMessage, setStepCompletionMessage] = useState(''); // For the popup
+    const [showRewardModal, setShowRewardModal] = useState(false); // For final reward
+
 
     // --- Handlers ---
     const handleMapClick = useCallback(() => {
-        // Minimize drawer only if it's expanded AND not in map interaction mode
         if (!isDrawerMinimized && currentView !== 'mapInteraction') {
-            console.log("Map clicked, minimizing drawer.");
             setIsDrawerMinimized(true);
-        } else if (currentView === 'mapInteraction') {
-            console.log("Map clicked during interaction - drawer stays peek");
         }
     }, [isDrawerMinimized, currentView]);
 
     const handleExpandRequest = useCallback(() => {
         if (isDrawerMinimized) {
-            console.log("Expand requested.");
             setIsDrawerMinimized(false);
         }
     }, [isDrawerMinimized]);
 
     const handleMinimizeRequest = useCallback(() => {
         if (!isDrawerMinimized) {
-            console.log("Minimize requested.");
             setIsDrawerMinimized(true);
         }
     }, [isDrawerMinimized]);
 
     const handleSearchFocus = useCallback(() => {
         if (isDrawerMinimized) {
-            console.log("Search focused, expanding drawer.");
             setIsDrawerMinimized(false);
-            // Optionally switch view if needed, e.g., to list or a dedicated search results view
-            // if (currentView === 'initial') setCurrentView('list');
+            if (currentView !== 'list') { // Switch to list if not already there
+                setCurrentView('list');
+                if (!selectedExperienceType) setSelectedExperienceType('Kunuz'); // Default if needed
+                setActiveBottomTab('Experiences');
+            }
         }
-    }, [isDrawerMinimized]);
+    }, [isDrawerMinimized, currentView, selectedExperienceType]);
 
     const handleInitialSelection = (type) => {
-        console.log("Selected type:", type);
         setSelectedExperienceType(type);
-        setCurrentView('list'); // Go to list view
+        setCurrentView('list');
         setShowInitialModal(false);
-        setIsDrawerMinimized(false); // Expand drawer to show list
-        setActiveBottomTab('Experiences'); // Highlight Experiences tab
+        setIsDrawerMinimized(false);
+        setActiveBottomTab('Experiences');
     };
 
     const handleCloseInitialModal = () => {
         setShowInitialModal(false);
-        // Decide what to do if closed without selection - maybe default to list?
-        // setCurrentView('list');
-        // setSelectedExperienceType('Kunuz'); // Default?
-        // Or just stay in 'initial' map view state? Let's stay initial.
-        setCurrentView('map'); // Go back to map focus
-        setIsDrawerMinimized(true); // Minimize drawer
+        setCurrentView('map');
+        setIsDrawerMinimized(true);
         setActiveBottomTab('Explore');
     };
 
     const handleExperienceSelect = useCallback((experience) => {
-        console.log("Selected experience:", experience.id);
         setSelectedExperience(experience);
         setCurrentView('detail');
-        setIsDrawerMinimized(false); // Ensure drawer is expanded
+        setIsDrawerMinimized(false);
+        setActiveQuestProgress(null); // Clear any previous active progress
+        setStepCompletionMessage(''); // Clear any lingering messages
+        setShowRewardModal(false);
     }, []);
 
     const handleBackToList = useCallback(() => {
-        console.log("Back to list view.");
         setSelectedExperience(null);
         setCurrentView('list');
-        // Keep drawer expanded
+        setIsDrawerMinimized(false); // Keep drawer expanded for list
+        setActiveQuestProgress(null);
+        setStepCompletionMessage('');
+        setShowRewardModal(false);
     }, []);
 
+    // --- Start Experience ---
     const handleStartExperience = useCallback((experience) => {
         console.log("Starting experience:", experience.id);
-        setSelectedExperience(experience); // Make sure it's set
+        setSelectedExperience(experience);
         setCurrentView('mapInteraction');
-        setIsDrawerMinimized(true); // Set drawer to peek mode for map interaction
+        setIsDrawerMinimized(true); // <-- Minimize drawer immediately for map view
 
-        // --- Initialize Progress State (Example for Kunuz) ---
+        // Initialize Progress State
+        let initialProgress = {
+            currentStepIndex: 0,
+            points: 0,
+            completedSteps: {}
+        };
         if (experience.type === 'Kunuz') {
-            setActiveQuestProgress({
-                currentStepIndex: 0,
-                points: 0,
-                timeRemaining: experience.timeLimit, // Need a timer mechanism here
-                completedSteps: {} // { stepId: submissionData }
-            });
-            // TODO: Start Timer logic here
+            initialProgress.timeRemaining = experience.timeLimit; // TODO: Implement actual timer
             console.log("Kunuz timer should start now for", experience.timeLimit);
-        } else {
-            // Initialize progress for Masarat (maybe just step index)
-            setActiveQuestProgress({
-                currentStepIndex: 0,
-                completedSteps: {}
-            });
         }
+        setActiveQuestProgress(initialProgress);
+        setStepCompletionMessage(''); // Clear previous messages
+        setShowRewardModal(false); // Ensure reward modal is hidden
+
     }, []);
 
+    // --- View Map (Passive) ---
     const handleViewMapForExperience = useCallback((experience) => {
         console.log("Viewing map for experience:", experience.id);
         setSelectedExperience(experience);
-        setCurrentView('mapInteraction'); // Use the same view, but progress might be null/different
+        setCurrentView('mapInteraction');
         setIsDrawerMinimized(true); // Go to peek mode
-        // Don't initialize progress if just viewing
-        // setActiveQuestProgress(null); // Or load saved progress if exists
+        setActiveQuestProgress(null); // No active progress when just viewing
+        setStepCompletionMessage('');
+        setShowRewardModal(false);
     }, []);
 
+    // --- Submit Kunuz Step ---
     const handleSubmitKunuzStep = useCallback((stepId, submissionData) => {
         console.log(`Submitting Step ${stepId}:`, submissionData);
-        if (!selectedExperience || selectedExperience.type !== 'Kunuz' || !activeQuestProgress) return;
+        if (!selectedExperience || selectedExperience.type !== 'Kunuz' || !activeQuestProgress) {
+            console.error("Submission failed: No selected Kunuz experience or progress.");
+            return;
+        }
 
         const currentStepIndex = activeQuestProgress.currentStepIndex;
+        if (currentStepIndex >= selectedExperience.steps.length) {
+            console.warn("Attempted to submit step after completion.");
+            return; // Already finished
+        }
         const step = selectedExperience.steps[currentStepIndex];
 
-        // --- Validation Logic (Placeholder) ---
+        // Ensure the submitted step ID matches the current step
+        if (step.id !== stepId) {
+            console.error(`Submission error: Expected step ${step.id}, but got ${stepId}`);
+            return;
+        }
+
+        // --- Validation Logic ---
         let isCorrect = false;
-        if (step.type === 'qa') {
-            isCorrect = (submissionData?.toLowerCase() === step.answer?.toLowerCase());
+        let errorMessage = "Incorrect submission. Please try again.";
+        if (!step) {
+            console.error("Submission error: Could not find current step data.");
+            errorMessage = "Error processing step. Please try again.";
+        } else if (step.type === 'qa') {
+            isCorrect = (submissionData?.trim().toLowerCase() === step.answer?.trim().toLowerCase());
             console.log("QA:", submissionData, "Expected:", step.answer, "Correct:", isCorrect);
         } else if (step.type === 'qr') {
             isCorrect = (submissionData === step.qrValue);
             console.log("QR:", submissionData, "Expected:", step.qrValue, "Correct:", isCorrect);
+            if (!isCorrect && submissionData) errorMessage = "Incorrect QR code scanned.";
+            else if (!submissionData) errorMessage = "QR scan failed or was cancelled.";
         } else if (step.type === 'photo') {
-            isCorrect = true; // Auto-approve photo for now
+            isCorrect = !!submissionData; // Auto-approve photo if data exists (simulation)
             console.log("Photo submitted:", submissionData, "Correct:", isCorrect);
-        } else if (step.type === 'location') {
-            isCorrect = true; // Assume location reached is correct
-            console.log("Location confirmed:", submissionData, "Correct:", isCorrect);
+            if (!isCorrect) errorMessage = "Photo capture failed or was cancelled.";
+        } else {
+            console.warn("Unhandled step type for validation:", step.type);
+            isCorrect = true; // Default to correct for unknown types for now?
         }
         // --- End Validation ---
 
         if (isCorrect) {
-            // Update Progress
+            const pointsEarned = step.points ?? 0;
+            // Show completion popup
+            setStepCompletionMessage(`Step Complete! +${pointsEarned} Points`);
+
             setActiveQuestProgress(prev => {
+                if (!prev) return null; // Should not happen, but safety check
                 const nextStepIndex = prev.currentStepIndex + 1;
-                const newPoints = (prev.points ?? 0) + (step.points ?? 0);
-                const newCompletedSteps = { ...prev.completedSteps, [stepId]: submissionData };
+                const newPoints = (prev.points ?? 0) + pointsEarned;
+                const newCompletedSteps = { ...prev.completedSteps, [stepId]: submissionData ?? true }; // Store data or true
 
                 // Check if finished
                 if (nextStepIndex >= selectedExperience.steps.length) {
                     console.log("KUNUZ FINISHED!");
-                    // TODO: Show completion summary, stop timer, award prize/badge
-                    alert(`Congratulations! You finished ${selectedExperience.title} and earned ${newPoints} points!`);
-                    // Maybe navigate back to detail view?
-                    // setCurrentView('detail');
-                    // Reset active progress?
-                    // return null;
-                    // For now, just keep state to show completion
+                    // TODO: Stop timer logic
+                    // Show Reward Modal instead of alert
+                    setShowRewardModal(true);
+
+                    // Update profile points (example)
+                    setUserProfileData(currentProfile => ({
+                        ...currentProfile,
+                        points: (currentProfile.points ?? 0) + newPoints,
+                        // Add to completed experiences if not already there
+                        completedExperiences: [
+                            ...(currentProfile.completedExperiences?.filter(e => e.id !== selectedExperience.id) || []),
+                            { id: selectedExperience.id, title: selectedExperience.title, date: new Date().toISOString().split('T')[0], type: 'Kunuz'}
+                        ]
+                    }));
+
+                    // Keep progress state to show completion, but mark as finished
                     return {
                         ...prev,
-                        currentStepIndex: nextStepIndex, // Go beyond last index to indicate finish?
+                        currentStepIndex: nextStepIndex, // Index goes beyond bounds
                         points: newPoints,
                         completedSteps: newCompletedSteps,
-                        // timeRemaining: calculateFinalTime(), // Stop timer
+                        isFinished: true, // Add a flag
+                        // timeRemaining: calculateFinalTime(), // TODO
                     };
                 }
 
@@ -226,45 +248,65 @@ function App() {
                 };
             });
         } else {
-            // Handle incorrect submission (e.g., show error message)
-            alert("Incorrect submission. Please try again.");
+            // Handle incorrect submission (e.g., show error message via alert or popup)
+            alert(errorMessage); // Using alert for simplicity, could use another popup state
             console.log("Incorrect submission for step", stepId);
         }
 
     }, [selectedExperience, activeQuestProgress]);
 
+    const handleDismissStepPopup = useCallback(() => {
+        setStepCompletionMessage('');
+    }, []);
 
+    const handleCloseRewardModal = useCallback(() => {
+        setShowRewardModal(false);
+        // Optionally navigate away after closing reward modal
+        // handleBackToList(); // Example: Go back to list view
+        if (selectedExperience) {
+            handleExperienceSelect(selectedExperience); // Go back to detail view
+        } else {
+            handleBackToList();
+        }
+    }, [selectedExperience, handleExperienceSelect, handleBackToList]); // Add dependencies
+
+
+    // --- Navigation ---
     const handleTabChange = useCallback((tabName, viewTarget) => {
-        console.log("Tab changed to:", tabName, "Target view:", viewTarget);
         setActiveBottomTab(tabName);
+        setShowRewardModal(false); // Close modals on nav change
+        setStepCompletionMessage('');
 
         if (viewTarget === 'list') {
             setCurrentView('list');
-            // Default to Kunuz or remember last? Let's default to Kunuz if nothing selected
             if (!selectedExperienceType) setSelectedExperienceType('Kunuz');
-            setSelectedExperience(null); // Clear detail view
-            setIsDrawerMinimized(false); // Expand drawer
+            setSelectedExperience(null);
+            setActiveQuestProgress(null);
+            setIsDrawerMinimized(false);
         } else if (viewTarget === 'profile') {
             setCurrentView('profile');
             setSelectedExperience(null);
+            setActiveQuestProgress(null);
             setIsDrawerMinimized(false);
         } else if (viewTarget === 'services') {
-            setCurrentView('services'); // Need a services view component
+            setCurrentView('services');
             setSelectedExperience(null);
+            setActiveQuestProgress(null);
             setIsDrawerMinimized(false);
-            alert("Services View Not Implemented Yet"); // Placeholder
+            alert("Services View Not Implemented Yet");
         } else { // Default to map/initial explore view
-            setCurrentView('map'); // Or 'initial'? Let's use 'map' as the base state
+            setCurrentView('map');
             setSelectedExperience(null);
-            setIsDrawerMinimized(true); // Minimize drawer for map focus
+            setActiveQuestProgress(null);
+            setIsDrawerMinimized(true);
         }
-    }, [selectedExperienceType]); // Include dependency if logic depends on it
+    }, [selectedExperienceType]);
 
     const handleCloseProfile = useCallback(() => {
-        // Go back to the previous view? Or always list? Let's go back to list.
-        setCurrentView('list');
-        setActiveBottomTab('Experiences'); // Re-highlight list tab
-    }, []);
+        setCurrentView('list'); // Go back to list view after closing profile
+        setActiveBottomTab('Experiences');
+        if (!selectedExperienceType) setSelectedExperienceType('Kunuz'); // Ensure type is set for list
+    }, [selectedExperienceType]);
 
 
     return (
@@ -282,26 +324,25 @@ function App() {
             <div className="flex-grow relative">
                 <MapView
                     onMapClick={handleMapClick}
-                    isDrawerMinimized={isDrawerMinimized} // Pass for overlay positioning
+                    isDrawerMinimized={isDrawerMinimized}
                     bottomNavHeight={BOTTOM_NAV_HEIGHT}
                     minimizedDrawerPeekHeight={MINIMIZED_DRAWER_PEEK_HEIGHT}
-                    // Pass data for experience layer
                     currentView={currentView}
                     selectedExperience={selectedExperience}
                     activeQuestProgress={activeQuestProgress}
+                    // Pass key for re-rendering map center if needed, e.g. based on selectedExperience.id
+                    key={selectedExperience?.id || 'map-default'}
                 />
             </div>
 
             {/* Interactive Drawer */}
             <InteractiveDrawer
-                // Drawer State & Control
                 isMinimized={isDrawerMinimized}
                 onExpandRequest={handleExpandRequest}
                 onMinimizeRequest={handleMinimizeRequest}
                 onSearchFocusRequest={handleSearchFocus}
                 bottomNavHeight={BOTTOM_NAV_HEIGHT}
                 minimizedDrawerPeekHeight={MINIMIZED_DRAWER_PEEK_HEIGHT}
-                // View & Data State
                 currentView={currentView}
                 selectedExperienceType={selectedExperienceType}
                 selectedExperience={selectedExperience}
@@ -309,14 +350,13 @@ function App() {
                 userProfileData={userProfileData}
                 activeQuestProgress={activeQuestProgress}
                 favoriteExperienceIds={favoriteExperienceIds}
-                // Action Handlers
                 onExperienceSelect={handleExperienceSelect}
                 onBackToList={handleBackToList}
                 onStartExperience={handleStartExperience}
                 onViewMapForExperience={handleViewMapForExperience}
                 onSubmitKunuzStep={handleSubmitKunuzStep}
                 onToggleFavorite={toggleFavorite}
-                onViewProfile={() => handleTabChange('Profile', 'profile')} // Reuse tab change logic
+                onViewProfile={() => handleTabChange('Profile', 'profile')}
                 onCloseProfile={handleCloseProfile}
             />
 
@@ -325,6 +365,21 @@ function App() {
                 activeTab={activeBottomTab}
                 onTabChange={handleTabChange}
             />
+
+            {/* Step Completion Popup */}
+            <StepCompletionPopup
+                message={stepCompletionMessage}
+                isVisible={!!stepCompletionMessage}
+                onDismiss={handleDismissStepPopup}
+            />
+
+            {/* Reward Modal */}
+            {showRewardModal && selectedExperience?.prize && (
+                <RewardModal
+                    prize={selectedExperience.prize}
+                    onClose={handleCloseRewardModal}
+                />
+            )}
         </div>
     );
 }
