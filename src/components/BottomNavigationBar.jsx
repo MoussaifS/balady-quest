@@ -2,29 +2,34 @@ import React from 'react';
 import { FiCompass, FiGitMerge, FiGrid, FiUser } from 'react-icons/fi';
 
 function BottomNavigationBar() {
-  const activeClass = "text-cyan-600"; // Active tab color
-  const inactiveClass = "text-gray-500";
+    const [activeTab, setActiveTab] = React.useState('Explore'); // Example state
 
-  return (
-    <nav className="fixed bottom-0 left-0 right-0 h-14 bg-white border-t border-gray-200 flex justify-around items-center z-40">
-      <button className={`flex flex-col items-center ${activeClass}`}>
-        <FiCompass size={22} />
-        <span className="text-xs mt-1">Explore</span>
-      </button>
-      <button className={`flex flex-col items-center ${inactiveClass} hover:text-gray-700`}>
-        <FiGitMerge size={22} />
-        <span className="text-xs mt-1">Routes</span>
-      </button>
-      <button className={`flex flex-col items-center ${inactiveClass} hover:text-gray-700`}>
-        <FiGrid size={22} />
-        <span className="text-xs mt-1">Services</span>
-      </button>
-      <button className={`flex flex-col items-center ${inactiveClass} hover:text-gray-700`}>
-        <FiUser size={22} />
-        <span className="text-xs mt-1">Profile</span>
-      </button>
-    </nav>
-  );
+    const tabs = [
+        { name: 'Explore', icon: FiCompass },
+        { name: 'Routes', icon: FiGitMerge },
+        { name: 'Services', icon: FiGrid },
+        { name: 'Profile', icon: FiUser },
+    ];
+
+    return (
+        <nav className="relative flex-shrink-0 h-14 bg-white border-t border-gray-200 flex justify-around items-center z-40">
+            {tabs.map((tab) => {
+                const isActive = activeTab === tab.name;
+                return (
+                    <button
+                        key={tab.name}
+                        onClick={() => setActiveTab(tab.name)}
+                        className={`flex flex-col items-center justify-center h-full px-2 focus:outline-none ${
+                            isActive ? 'text-cyan-600' : 'text-gray-500 hover:text-gray-700'
+                        } transition-colors duration-150 ease-in-out`}
+                    >
+                        <tab.icon size={22} />
+                        <span className="text-xs mt-0.5 font-medium">{tab.name}</span>
+                    </button>
+                );
+            })}
+        </nav>
+    );
 }
 
 export default BottomNavigationBar;
